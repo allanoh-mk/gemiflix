@@ -1,0 +1,906 @@
+  1730→        await deleteUser(id, u?.name || '');
+  1731→      } else if (action === 'activate') {
+  1732→        await updateUser(id, { isActive: true });
+  1733→      } else if (action === 'suspend') {
+  1734→        await updateUser(id, { isActive: false });
+  1735→      } else if (action === 'admin') {
+  1736→        await updateUser(id, { isAdmin: true });
+  1737→      }
+  1738→    }
+  1739→    setSelectedIds(new Set());
+  1740→  };
+  1741→
+  1742→  return (
+  1743→    <div className="space-y-4">
+  1744→      {/* Stats */}
+  1745→      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+  1746→        {[
+  1747→          { label: 'Total Users', value: users.length, color: 'text-[var(--accent-current)]' },
+  1748→          { label: 'Admins', value: users.filter((u) => u.isAdmin).length, color: 'text-amber-400' },
+  1749→          { label: 'Active', value: users.filter((u) => u.isActive).length, color: 'text-green-400' },
+  1750→          { label: 'Suspended', value: users.filter((u) => !u.isActive).length, color: 'text-red-400' },
+  1751→        ].map((stat) => (
+  1752→          <div key={stat.label} className="glass-panel p-3 text-center">
+  1753→            <span className={`text-xl font-bold ${stat.color}`}>{stat.value}</span>
+  1754→            <p className="text-xs text-[var(--muted-foreground)] mt-1">{stat.label}</p>
+  1755→          </div>
+  1756→        ))}
+  1757→      </div>
+  1758→
+  1759→      <SettingCard>
+  1760→        {/* Search and bulk actions */}
+  1761→        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mb-4">
+  1762→          <div className="flex-1 relative">
+  1763→            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted-foreground)]" />
+  1764→            <Input
+  1765→              value={search}
+  1766→              onChange={(e) => setSearch(e.target.value)}
+  1767→              placeholder="Search users..."
+  1768→              className="glass-input bg-black/80 backdrop-blur-xl border-[var(--glass-border)] text-sm text-[var(--foreground)] pl-9"
+  1769→            />
+  1770→          </div>
+  1771→          {selectedIds.size > 0 && (
+  1772→            <div className="flex gap-1.5 flex-wrap">
+  1773→              <Button size="sm" variant="outline" className="border-green-500/30 text-green-400 text-xs h-7" onClick={() => bulkAction('activate')}>Activate</Button>
+  1774→              <Button size="sm" variant="outline" className="border-yellow-500/30 text-yellow-400 text-xs h-7" onClick={() => bulkAction('suspend')}>Suspend</Button>
+  1775→              <Button size="sm" variant="outline" className="border-amber-500/30 text-amber-400 text-xs h-7" onClick={() => bulkAction('admin')}>Make Admin</Button>
+  1776→              <Button size="sm" variant="outline" className="border-red-500/30 text-red-400 text-xs h-7" onClick={() => bulkAction('delete')}>Delete</Button>
+  1777→            </div>
+  1778→          )}
+  1779→        </div>
+  1780→
+  1781→        {loading ? (
+  1782→          <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-[var(--accent-current)]" /></div>
+  1783→        ) : (
+  1784→          <div className="space-y-2 max-h-[500px] overflow-y-auto">
+  1785→            {/* Select All */}
+  1786→            <div className="flex items-center gap-3 px-2 py-1">
+  1787→              <Checkbox checked={selectedIds.size === filtered.length && filtered.length > 0} onCheckedChange={toggleSelectAll} />
+  1788→              <span className="text-xs text-[var(--muted-foreground)]">Select All ({filtered.length})</span>
+  1789→            </div>
+  1790→
+  1791→            {filtered.map((u) => (
+  1792→              <div key={u.id} className="glass-card flex flex-col sm:flex-row sm:items-center gap-3 p-3 !transform-none hover:!transform-none">
+  1793→                <div className="flex items-center gap-3 flex-1 min-w-0">
+  1794→                  <Checkbox checked={selectedIds.has(u.id)} onCheckedChange={() => toggleSelect(u.id)} />
+  1795→                  <Avatar className="h-8 w-8">
+  1796→                    <AvatarImage src={u.avatar} />
+  1797→                    <AvatarFallback className="bg-[var(--accent-current)]/20 text-[var(--accent-current)] text-xs font-bold">
+  1798→                      {u.name.slice(0, 2).toUpperCase()}
+  1799→                    </AvatarFallback>
+  1800→                  </Avatar>
+  1801→                  <div className="min-w-0 flex-1">
+  1802→                    <p className="text-sm font-medium text-[var(--foreground)] truncate">{u.name}</p>
+  1803→                    <div className="flex items-center gap-1.5 flex-wrap">
+  1804→                      <Badge variant="outline" className={`text-[10px] h-4 px-1.5 ${u.isActive ? 'border-green-500/30 text-green-400' : 'border-red-500/30 text-red-400'}`}>
+  1805→                        {u.isActive ? 'Active' : 'Suspended'}
+  1806→                      </Badge>
+  1807→                      {u.isAdmin && <Badge className="text-[10px] h-4 px-1.5 bg-amber-500/20 text-amber-400">Admin</Badge>}
+  1808→                      {u.isKid && <Badge className="text-[10px] h-4 px-1.5 bg-green-500/20 text-green-400">Kid</Badge>}
+  1809→                    </div>
+  1810→                  </div>
+  1811→                </div>
+  1812→
+  1813→                <div className="flex items-center gap-1.5 shrink-0">
+  1814→                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-amber-400 hover:bg-amber-500/10"
+  1815→                    onClick={() => updateUser(u.id, { isAdmin: !u.isAdmin })}>
+  1816→                    <Shield className="w-3.5 h-3.5" />
+  1817→                  </Button>
+  1818→                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-green-400 hover:bg-green-500/10"
+  1819→                    onClick={() => updateUser(u.id, { isActive: !u.isActive })}>
+  1820→                    {u.isActive ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+  1821→                  </Button>
+  1822→                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-green-400 hover:bg-green-500/10"
+  1823→                    onClick={() => updateUser(u.id, { isKid: !u.isKid })}>
+  1824→                    <BadgeCheck className="w-3.5 h-3.5" />
+  1825→                  </Button>
+  1826→                  <AlertDialog>
+  1827→                    <AlertDialogTrigger asChild>
+  1828→                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-400 hover:bg-red-500/10">
+  1829→                        <Trash2 className="w-3.5 h-3.5" />
+  1830→                      </Button>
+  1831→                    </AlertDialogTrigger>
+  1832→                    <AlertDialogContent className="bg-black/90 backdrop-blur-xl border-[var(--glass-border)]">
+  1833→                      <AlertDialogHeader>
+  1834→                        <AlertDialogTitle className="text-[var(--foreground)]">Delete User &ldquo;{u.name}&rdquo;?</AlertDialogTitle>
+  1835→                        <AlertDialogDescription className="text-[var(--muted-foreground)]">This action cannot be undone.</AlertDialogDescription>
+  1836→                      </AlertDialogHeader>
+  1837→                      <AlertDialogFooter>
+  1838→                        <AlertDialogCancel className="border-[var(--glass-border)] text-[var(--foreground)]">Cancel</AlertDialogCancel>
+  1839→                        <AlertDialogAction onClick={() => deleteUser(u.id, u.name)} className="bg-red-500 hover:bg-red-600">Delete</AlertDialogAction>
+  1840→                      </AlertDialogFooter>
+  1841→                    </AlertDialogContent>
+  1842→                  </AlertDialog>
+  1843→                </div>
+  1844→              </div>
+  1845→            ))}
+  1846→          </div>
+  1847→        )}
+  1848→      </SettingCard>
+  1849→    </div>
+  1850→  );
+  1851→}
+  1852→
+  1853→/* ================================================================
+  1854→   ADMIN: CONTENT TAB
+  1855→   ================================================================ */
+  1856→function AdminContentTab() {
+  1857→  const [contentSettings, setContentSettings] = useState({
+  1858→    autoFetchMetadata: true,
+  1859→    posterQuality: 'high',
+  1860→    backdropQuality: 'high',
+  1861→    trailerAutoPlay: false,
+  1862→    contentRatingDisplay: true,
+  1863→    ageRestrictionLabels: true,
+  1864→    contentWarnings: true,
+  1865→    refreshInterval: '24',
+  1866→    featuredMovie: '',
+  1867→    movieOfDay: '',
+  1868→    importFromTmdb: '',
+  1869→  });
+  1870→
+  1871→  return (
+  1872→    <div className="space-y-4">
+  1873→      <SettingCard>
+  1874→        <SectionHeader title="Content Management" icon={<Film className="w-4 h-4" />} />
+  1875→
+  1876→        <div className="flex flex-wrap gap-2 mb-4">
+  1877→          <Button size="sm" className="bg-[var(--accent-current)] text-white">
+  1878→            <Plus className="w-3 h-3 mr-1" /> Add New Movie
+  1879→          </Button>
+  1880→          <Button size="sm" variant="outline" className="border-[var(--glass-border)] text-[var(--foreground)]">
+  1881→            <Edit3 className="w-3 h-3 mr-1" /> Edit Movie
+  1882→          </Button>
+  1883→          <Button size="sm" variant="outline" className="border-red-500/30 text-red-400">
+  1884→            <Trash2 className="w-3 h-3 mr-1" /> Delete Movie
+  1885→          </Button>
+  1886→        </div>
+  1887→
+  1888→        <SettingRow label="Set Featured Movie" description="Movie shown in the hero section">
+  1889→          <GlassInput value={contentSettings.featuredMovie} onChange={(v) => setContentSettings((p) => ({ ...p, featuredMovie: v }))} placeholder="Movie title" className="w-full sm:w-48" />
+  1890→        </SettingRow>
+  1891→        <Separator className="bg-white/5" />
+  1892→        <SettingRow label="Movie of the Day" description="Today&apos;s featured movie">
+  1893→          <GlassInput value={contentSettings.movieOfDay} onChange={(v) => setContentSettings((p) => ({ ...p, movieOfDay: v }))} placeholder="Movie title" className="w-full sm:w-48" />
+  1894→        </SettingRow>
+  1895→        <Separator className="bg-white/5" />
+  1896→        <SettingRow label="Content Refresh Interval" description="How often to check for new content">
+  1897→          <GlassSelect value={contentSettings.refreshInterval} onValueChange={(v) => setContentSettings((p) => ({ ...p, refreshInterval: v }))} options={[
+  1898→            { value: '1', label: '1 Hour' }, { value: '6', label: '6 Hours' },
+  1899→            { value: '12', label: '12 Hours' }, { value: '24', label: '24 Hours' },
+  1900→          ]} />
+  1901→        </SettingRow>
+  1902→      </SettingCard>
+  1903→
+  1904→      <SettingCard>
+  1905→        <SectionHeader title="Content Settings" icon={<Settings className="w-4 h-4" />} />
+  1906→
+  1907→        <SettingRow label="Auto-Fetch Metadata">
+  1908→          <Switch checked={contentSettings.autoFetchMetadata} onCheckedChange={(v) => setContentSettings((p) => ({ ...p, autoFetchMetadata: v }))} />
+  1909→        </SettingRow>
+  1910→        <Separator className="bg-white/5" />
+  1911→        <SettingRow label="Poster Quality">
+  1912→          <GlassSelect value={contentSettings.posterQuality} onValueChange={(v) => setContentSettings((p) => ({ ...p, posterQuality: v }))} options={[
+  1913→            { value: 'low', label: 'Low' }, { value: 'medium', label: 'Medium' }, { value: 'high', label: 'High' },
+  1914→          ]} />
+  1915→        </SettingRow>
+  1916→        <Separator className="bg-white/5" />
+  1917→        <SettingRow label="Backdrop Quality">
+  1918→          <GlassSelect value={contentSettings.backdropQuality} onValueChange={(v) => setContentSettings((p) => ({ ...p, backdropQuality: v }))} options={[
+  1919→            { value: 'low', label: 'Low' }, { value: 'medium', label: 'Medium' }, { value: 'high', label: 'High' },
+  1920→          ]} />
+  1921→        </SettingRow>
+  1922→        <Separator className="bg-white/5" />
+  1923→        <SettingRow label="Trailer Auto-Play">
+  1924→          <Switch checked={contentSettings.trailerAutoPlay} onCheckedChange={(v) => setContentSettings((p) => ({ ...p, trailerAutoPlay: v }))} />
+  1925→        </SettingRow>
+  1926→        <Separator className="bg-white/5" />
+  1927→        <SettingRow label="Content Rating Display">
+  1928→          <Switch checked={contentSettings.contentRatingDisplay} onCheckedChange={(v) => setContentSettings((p) => ({ ...p, contentRatingDisplay: v }))} />
+  1929→        </SettingRow>
+  1930→        <Separator className="bg-white/5" />
+  1931→        <SettingRow label="Age Restriction Labels">
+  1932→          <Switch checked={contentSettings.ageRestrictionLabels} onCheckedChange={(v) => setContentSettings((p) => ({ ...p, ageRestrictionLabels: v }))} />
+  1933→        </SettingRow>
+  1934→        <Separator className="bg-white/5" />
+  1935→        <SettingRow label="Content Warnings">
+  1936→          <Switch checked={contentSettings.contentWarnings} onCheckedChange={(v) => setContentSettings((p) => ({ ...p, contentWarnings: v }))} />
+  1937→        </SettingRow>
+  1938→      </SettingCard>
+  1939→
+  1940→      <SettingCard>
+  1941→        <SectionHeader title="Import & Collections" icon={<DownloadCloud className="w-4 h-4" />} />
+  1942→
+  1943→        <SettingRow label="Import from TMDB">
+  1944→          <Button size="sm" variant="outline" className="border-[var(--glass-border)] text-[var(--foreground)]">
+  1945→            <DownloadCloud className="w-3 h-3 mr-1" /> Import
+  1946→          </Button>
+  1947→        </SettingRow>
+  1948→        <Separator className="bg-white/5" />
+  1949→        <SettingRow label="Manage Collections / Curated Lists">
+  1950→          <Button size="sm" variant="outline" className="border-[var(--glass-border)] text-[var(--foreground)]">
+  1951→            <ClipboardList className="w-3 h-3 mr-1" /> Manage
+  1952→          </Button>
+  1953→        </SettingRow>
+  1954→      </SettingCard>
+  1955→    </div>
+  1956→  );
+  1957→}
+  1958→
+  1959→/* ================================================================
+  1960→   ADMIN: GENERIC SETTINGS TAB HELPER
+  1961→   ================================================================ */
+  1962→function AdminGenericTab({ title, icon, settings, setSettings, fields, onSave }: {
+  1963→  title: string; icon: React.ReactNode;
+  1964→  settings: Record<string, unknown>;
+  1965→  setSettings: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
+  1966→  fields: { key: string; label: string; description?: string; type: 'toggle' | 'select' | 'input' | 'textarea' | 'slider' | 'readonly'; options?: { value: string; label: string }[]; min?: number; max?: number; readOnlyValue?: string; }[];
+  1967→  onSave: () => void;
+  1968→}) {
+  1969→  const update = (key: string, value: unknown) => {
+  1970→    setSettings((prev) => ({ ...prev, [key]: value }));
+  1971→  };
+  1972→
+  1973→  return (
+  1974→    <div className="space-y-4">
+  1975→      <SettingCard>
+  1976→        <SectionHeader title={title} icon={icon} />
+  1977→        {fields.map((f, i) => (
+  1978→          <React.Fragment key={f.key}>
+  1979→            {i > 0 && <Separator className="bg-white/5" />}
+  1980→            {f.type === 'toggle' ? (
+  1981→              <SettingRow label={f.label} description={f.description}>
+  1982→                <Switch checked={!!settings[f.key]} onCheckedChange={(v) => update(f.key, v)} />
+  1983→              </SettingRow>
+  1984→            ) : f.type === 'select' ? (
+  1985→              <SettingRow label={f.label} description={f.description}>
+  1986→                <GlassSelect
+  1987→                  value={String(settings[f.key] || '')}
+  1988→                  onValueChange={(v) => update(f.key, v)}
+  1989→                  options={f.options || []}
+  1990→                />
+  1991→              </SettingRow>
+  1992→            ) : f.type === 'input' ? (
+  1993→              <SettingRow label={f.label} description={f.description}>
+  1994→                <GlassInput value={String(settings[f.key] || '')} onChange={(v) => update(f.key, v)} className="w-full sm:w-64" />
+  1995→              </SettingRow>
+  1996→            ) : f.type === 'textarea' ? (
+  1997→              <SettingRow label={f.label} description={f.description}>
+  1998→                <GlassTextarea value={String(settings[f.key] || '')} onChange={(v) => update(f.key, v)} rows={3} />
+  1999→              </SettingRow>
+  2000→            ) : f.type === 'slider' ? (
+  2001→              <SettingRow label={`${f.label}: ${settings[f.key] || 0}`} description={f.description}>
+  2002→                <div className="w-full sm:w-64">
+  2003→                  <Slider value={[Number(settings[f.key] || 0)]} min={f.min || 0} max={f.max || 100} step={1} onValueChange={(v) => update(f.key, v[0])} />
+  2004→                </div>
+  2005→              </SettingRow>
+  2006→            ) : f.type === 'readonly' ? (
+  2007→              <SettingRow label={f.label}>
+  2008→                <span className="text-sm text-[var(--muted-foreground)]">{f.readOnlyValue || String(settings[f.key] || 'N/A')}</span>
+  2009→              </SettingRow>
+  2010→            ) : null}
+  2011→          </React.Fragment>
+  2012→        ))}
+  2013→      </SettingCard>
+  2014→      <div className="flex justify-end">
+  2015→        <SaveButton onClick={onSave} saving={false} saved={false} />
+  2016→      </div>
+  2017→    </div>
+  2018→  );
+  2019→}
+  2020→
+  2021→/* ================================================================
+  2022→   ADMIN: SYSTEM TAB
+  2023→   ================================================================ */
+  2024→function AdminSystemTab() {
+  2025→  const [uptime, setUptime] = useState('0d 0h 0m');
+  2026→  const [serverTime, setServerTime] = useState(new Date().toLocaleString());
+  2027→
+  2028→  useEffect(() => {
+  2029→    const timer = setInterval(() => setServerTime(new Date().toLocaleString()), 1000);
+  2030→    return () => clearInterval(timer);
+  2031→  }, []);
+  2032→
+  2033→  const fields = [
+  2034→    { key: 'systemStatus', label: 'System Status', type: 'readonly' as const, readOnlyValue: '● Online' },
+  2035→    { key: 'uptime', label: 'Uptime', type: 'readonly' as const, readOnlyValue: uptime },
+  2036→    { key: 'memoryUsage', label: 'Memory Usage', type: 'readonly' as const, readOnlyValue: '128 MB / 512 MB' },
+  2037→    { key: 'cpuUsage', label: 'CPU Usage', type: 'readonly' as const, readOnlyValue: '12%' },
+  2038→    { key: 'activeUsers', label: 'Active Users', type: 'readonly' as const, readOnlyValue: '1' },
+  2039→    { key: 'totalUsers', label: 'Total Users', type: 'readonly' as const, readOnlyValue: '1' },
+  2040→    { key: 'totalMovies', label: 'Total Movies', type: 'readonly' as const, readOnlyValue: '24' },
+  2041→    { key: 'databaseSize', label: 'Database Size', type: 'readonly' as const, readOnlyValue: '4.2 MB' },
+  2042→    { key: 'serverTime', label: 'Server Time', type: 'readonly' as const, readOnlyValue: serverTime },
+  2043→  ];
+  2044→
+  2045→  return (
+  2046→    <div className="space-y-4">
+  2047→      <AdminGenericTab
+  2048→        title="System Status"
+  2049→        icon={<Server className="w-4 h-4" />}
+  2050→        settings={{}}
+  2051→        setSettings={() => {}}
+  2052→        fields={fields}
+  2053→        onSave={() => {}}
+  2054→      />
+  2055→      <SettingCard>
+  2056→        <SectionHeader title="Server Actions" icon={<Zap className="w-4 h-4" />} />
+  2057→        <SettingRow label="Restart Server" description="This will restart the application server">
+  2058→          <AlertDialog>
+  2059→            <AlertDialogTrigger asChild>
+  2060→              <Button variant="destructive" size="sm" className="bg-amber-500/20 text-amber-400 hover:bg-amber-500/30">
+  2061→                <RefreshCw className="w-3 h-3 mr-1" /> Restart
+  2062→              </Button>
+  2063→            </AlertDialogTrigger>
+  2064→            <AlertDialogContent className="bg-black/90 backdrop-blur-xl border-[var(--glass-border)]">
+  2065→              <AlertDialogHeader>
+  2066→                <AlertDialogTitle className="text-[var(--foreground)]">Restart Server?</AlertDialogTitle>
+  2067→                <AlertDialogDescription className="text-[var(--muted-foreground)]">The server will be temporarily unavailable.</AlertDialogDescription>
+  2068→              </AlertDialogHeader>
+  2069→              <AlertDialogFooter>
+  2070→                <AlertDialogCancel className="border-[var(--glass-border)] text-[var(--foreground)]">Cancel</AlertDialogCancel>
+  2071→                <AlertDialogAction onClick={() => toast.success('Server restart initiated')} className="bg-amber-500 hover:bg-amber-600">Restart</AlertDialogAction>
+  2072→              </AlertDialogFooter>
+  2073→            </AlertDialogContent>
+  2074→          </AlertDialog>
+  2075→        </SettingRow>
+  2076→      </SettingCard>
+  2077→    </div>
+  2078→  );
+  2079→}
+  2080→
+  2081→/* ================================================================
+  2082→   ADMIN: BACKUP TAB
+  2083→   ================================================================ */
+  2084→function AdminBackupTab() {
+  2085→  const [backupSettings, setBackupSettings] = useState<Record<string, unknown>>({
+  2086→    autoBackup: true,
+  2087→    backupFrequency: 'weekly',
+  2088→    backupRetentionCount: 7,
+  2089→    lastBackup: '2024-12-01 12:00:00',
+  2090→    backupStoragePath: './backups',
+  2091→    backupCompression: true,
+  2092→    backupEncryption: false,
+  2093→  });
+  2094→
+  2095→  const fields = [
+  2096→    { key: 'autoBackup', label: 'Auto-Backup', type: 'toggle' as const, description: 'Automatically create backups' },
+  2097→    { key: 'backupFrequency', label: 'Backup Frequency', type: 'select' as const, options: [
+  2098→      { value: 'daily', label: 'Daily' }, { value: 'weekly', label: 'Weekly' }, { value: 'monthly', label: 'Monthly' },
+  2099→    ]},
+  2100→    { key: 'backupRetentionCount', label: 'Backup Retention Count', type: 'slider' as const, min: 1, max: 30 },
+  2101→    { key: 'lastBackup', label: 'Last Backup', type: 'readonly' as const, readOnlyValue: backupSettings.lastBackup as string },
+  2102→    { key: 'backupStoragePath', label: 'Backup Storage Path', type: 'input' as const },
+  2103→    { key: 'backupCompression', label: 'Backup Compression', type: 'toggle' as const },
+  2104→    { key: 'backupEncryption', label: 'Backup Encryption', type: 'toggle' as const },
+  2105→  ];
+  2106→
+  2107→  return (
+  2108→    <div className="space-y-4">
+  2109→      <AdminGenericTab
+  2110→        title="Backup Settings"
+  2111→        icon={<Archive className="w-4 h-4" />}
+  2112→        settings={backupSettings}
+  2113→        setSettings={setBackupSettings}
+  2114→        fields={fields}
+  2115→        onSave={() => toast.success('Backup settings saved')}
+  2116→      />
+  2117→      <SettingCard>
+  2118→        <SectionHeader title="Backup Actions" icon={<Zap className="w-4 h-4" />} />
+  2119→        <div className="flex flex-wrap gap-2">
+  2120→          <Button size="sm" className="bg-[var(--accent-current)] text-white" onClick={() => toast.success('Manual backup started')}>
+  2121→            <DownloadCloud className="w-3 h-3 mr-1" /> Manual Backup
+  2122→          </Button>
+  2123→          <Button size="sm" variant="outline" className="border-[var(--glass-border)] text-[var(--foreground)]" onClick={() => toast.info('Backup download started')}>
+  2124→            <Download className="w-3 h-3 mr-1" /> Download Latest
+  2125→          </Button>
+  2126→          <Button size="sm" variant="outline" className="border-[var(--glass-border)] text-[var(--foreground)]">
+  2127→            <Upload className="w-3 h-3 mr-1" /> Restore from Backup
+  2128→          </Button>
+  2129→        </div>
+  2130→      </SettingCard>
+  2131→    </div>
+  2132→  );
+  2133→}
+  2134→
+  2135→/* ================================================================
+  2136→   EAR ICON (for Accessibility)
+  2137→   ================================================================ */
+  2138→function Ear(props: React.SVGProps<SVGSVGElement>) {
+  2139→  return (
+  2140→    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+  2141→      <path d="M12 6v12" /><path d="M8 8v8" /><path d="M16 8v8" />
+  2142→      <path d="M6 10v4" /><path d="M18 10v4" /><circle cx="12" cy="18" r="2" />
+  2143→      <path d="M20 12a8 8 0 1 0-16 0" />
+  2144→    </svg>
+  2145→  );
+  2146→}
+  2147→
+  2148→/* LayoutGrid icon */
+  2149→function LayoutGrid(props: React.SVGProps<SVGSVGElement>) {
+  2150→  return (
+  2151→    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+  2152→      <rect width="7" height="7" x="3" y="3" rx="1" /><rect width="7" height="7" x="14" y="3" rx="1" />
+  2153→      <rect width="7" height="7" x="3" y="14" rx="1" /><rect width="7" height="7" x="14" y="14" rx="1" />
+  2154→    </svg>
+  2155→  );
+  2156→}
+  2157→
+  2158→/* ================================================================
+  2159→   MAIN SETTINGS PAGE
+  2160→   ================================================================ */
+  2161→export default function SettingsPage() {
+  2162→  const setView = useAppStore((s) => s.setView);
+  2163→  const user = useAuthStore((s) => s.user);
+  2164→  const isAdmin = user?.isAdmin ?? false;
+  2165→
+  2166→  const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
+  2167→  const [settings, setSettings] = useState<UserSettingsData>(defaultUserSettings);
+  2168→  const [adminSettings, setAdminSettings] = useState<AdminSettingsData>(defaultAdminSettings);
+  2169→  const [saving, setSaving] = useState(false);
+  2170→  const [saved, setSaved] = useState(false);
+  2171→  const [loading, setLoading] = useState(true);
+  2172→
+  2173→  // Load settings from API
+  2174→  useEffect(() => {
+  2175→    Promise.all([
+  2176→      fetch('/api/settings').then((r) => r.json()).catch(() => null),
+  2177→      isAdmin ? fetch('/api/admin/settings').then((r) => r.json()).catch(() => null) : Promise.resolve(null),
+  2178→    ]).then(([userData, adminData]) => {
+  2179→      if (userData?.settings) {
+  2180→        const s = userData.settings;
+  2181→        setSettings((prev) => ({
+  2182→          ...prev,
+  2183→          displayName: s.accentColor ? prev.displayName : (user?.name || ''),
+  2184→          accentColor: s.accentColor || prev.accentColor,
+  2185→          themeMode: s.themeMode || prev.themeMode,
+  2186→          blurIntensity: s.blurIntensity ?? prev.blurIntensity,
+  2187→          noiseLevel: s.noiseLevel ?? prev.noiseLevel,
+  2188→          layoutDensity: s.layoutDensity || prev.layoutDensity,
+  2189→          reduceMotion: s.reduceMotion ?? prev.reduceMotion,
+  2190→          showAurora: s.showAurora ?? prev.showAurora,
+  2191→          showSparkles: s.showSparkles ?? prev.showSparkles,
+  2192→          defaultVideoQuality: s.defaultQuality || prev.defaultVideoQuality,
+  2193→          autoPlayNext: s.autoPlayNext ?? prev.autoPlayNext,
+  2194→          autoPlayTrailers: s.autoPlayTrailers ?? prev.autoPlayTrailers,
+  2195→          skipIntro: s.skipIntro ?? prev.skipIntro,
+  2196→          skipRecap: s.skipRecap ?? prev.skipRecap,
+  2197→          defaultVolume: s.defaultVolume ?? prev.defaultVolume,
+  2198→          enableSubtitles: s.defaultSubtitles ?? prev.enableSubtitles,
+  2199→          subtitleLanguage: s.subtitleLanguage || prev.subtitleLanguage,
+  2200→          subtitleFontSize: s.subtitleSize || prev.subtitleFontSize,
+  2201→          subtitleColor: s.subtitleColor || prev.subtitleColor,
+  2202→          audioLanguage: s.audioLanguage || prev.audioLanguage,
+  2203→          playbackSpeed: String(s.playbackSpeed || prev.playbackSpeed),
+  2204→          streamingBuffer: s.streamingBuffer || prev.streamingBuffer,
+  2205→          pushNotifications: s.pushNotifications ?? prev.pushNotifications,
+  2206→          newReleaseAlerts: s.newReleaseAlerts ?? prev.newReleaseAlerts,
+  2207→          watchlistAlerts: s.watchlistAlerts ?? prev.watchlistAlerts,
+  2208→          recommendationAlerts: s.recommendationAlerts ?? prev.recommendationAlerts,
+  2209→          systemAlerts: s.systemAlerts ?? prev.systemAlerts,
+  2210→          profileVisibility: s.profileVisibility || prev.profileVisibility,
+  2211→          showWatchHistory: s.showWatchHistory ?? prev.showWatchHistory,
+  2212→          showWatchlist: s.showWatchlist ?? prev.showWatchlist,
+  2213→          showOnlineStatus: s.showActivityStatus ?? prev.showOnlineStatus,
+  2214→          dataCollection: s.dataCollection ?? prev.dataCollection,
+  2215→          downloadQuality: s.downloadQuality || prev.downloadQuality,
+  2216→          downloadPath: s.downloadPath || prev.downloadPath,
+  2217→          autoDeleteWatched: s.autoDeleteWatched ?? prev.autoDeleteWatched,
+  2218→          wifiOnlyDownloads: s.wifiOnlyDownloads ?? prev.wifiOnlyDownloads,
+  2219→          highContrast: s.highContrast ?? prev.highContrast,
+  2220→          largeText: s.largeText ?? prev.largeText,
+  2221→          screenReader: s.screenReader ?? prev.screenReader,
+  2222→          closedCaptions: s.closedCaptions ?? prev.closedCaptions,
+  2223→          audioDescriptions: s.audioDescriptions ?? prev.audioDescriptions,
+  2224→          interfaceLanguage: s.interfaceLanguage || prev.interfaceLanguage,
+  2225→          contentRegion: s.contentRegion || prev.contentRegion,
+  2226→        }));
+  2227→      }
+  2228→      if (adminData?.settings) {
+  2229→        setAdminSettings((prev) => ({ ...prev, ...adminData.settings }));
+  2230→      }
+  2231→      setLoading(false);
+  2232→    });
+  2233→  }, [isAdmin, user]);
+  2234→
+  2235→  const handleSave = useCallback(async () => {
+  2236→    setSaving(true);
+  2237→    try {
+  2238→      await fetch('/api/settings', {
+  2239→        method: 'PUT',
+  2240→        headers: { 'Content-Type': 'application/json' },
+  2241→        body: JSON.stringify({
+  2242→          accentColor: settings.accentColor,
+  2243→          themeMode: settings.themeMode,
+  2244→          blurIntensity: settings.blurIntensity,
+  2245→          noiseLevel: settings.noiseLevel,
+  2246→          layoutDensity: settings.layoutDensity,
+  2247→          reduceMotion: settings.reduceMotion,
+  2248→          showAurora: settings.showAurora,
+  2249→          showSparkles: settings.showSparkles,
+  2250→          defaultQuality: settings.defaultVideoQuality,
+  2251→          autoPlayNext: settings.autoPlayNext,
+  2252→          autoPlayTrailers: settings.autoPlayTrailers,
+  2253→          skipIntro: settings.skipIntro,
+  2254→          skipRecap: settings.skipRecap,
+  2255→          defaultVolume: settings.defaultVolume,
+  2256→          defaultSubtitles: settings.enableSubtitles,
+  2257→          subtitleLanguage: settings.subtitleLanguage,
+  2258→          subtitleSize: settings.subtitleFontSize,
+  2259→          subtitleColor: settings.subtitleColor,
+  2260→          audioLanguage: settings.audioLanguage,
+  2261→          playbackSpeed: parseFloat(settings.playbackSpeed),
+  2262→          streamingBuffer: settings.streamingBuffer,
+  2263→          pushNotifications: settings.pushNotifications,
+  2264→          newReleaseAlerts: settings.newReleaseAlerts,
+  2265→          watchlistAlerts: settings.watchlistAlerts,
+  2266→          recommendationAlerts: settings.recommendationAlerts,
+  2267→          systemAlerts: settings.systemAlerts,
+  2268→          profileVisibility: settings.profileVisibility,
+  2269→          showWatchHistory: settings.showWatchHistory,
+  2270→          showWatchlist: settings.showWatchlist,
+  2271→          showActivityStatus: settings.showOnlineStatus,
+  2272→          dataCollection: settings.dataCollection,
+  2273→          downloadQuality: settings.downloadQuality,
+  2274→          downloadPath: settings.downloadPath,
+  2275→          autoDeleteWatched: settings.autoDeleteWatched,
+  2276→          wifiOnlyDownloads: settings.wifiOnlyDownloads,
+  2277→          highContrast: settings.highContrast,
+  2278→          largeText: settings.largeText,
+  2279→          screenReader: settings.screenReader,
+  2280→          closedCaptions: settings.closedCaptions,
+  2281→          audioDescriptions: settings.audioDescriptions,
+  2282→          interfaceLanguage: settings.interfaceLanguage,
+  2283→          contentRegion: settings.contentRegion,
+  2284→        }),
+  2285→      });
+  2286→      setSaved(true);
+  2287→      toast.success('Settings saved!');
+  2288→      setTimeout(() => setSaved(false), 2000);
+  2289→    } catch {
+  2290→      toast.error('Failed to save settings');
+  2291→    } finally {
+  2292→      setSaving(false);
+  2293→    }
+  2294→  }, [settings]);
+  2295→
+  2296→  const handleSaveAdmin = useCallback(async () => {
+  2297→    setSaving(true);
+  2298→    try {
+  2299→      await fetch('/api/admin/settings', {
+  2300→        method: 'PUT',
+  2301→        headers: { 'Content-Type': 'application/json' },
+  2302→        body: JSON.stringify({ settings: adminSettings }),
+  2303→      });
+  2304→      setSaved(true);
+  2305→      toast.success('Admin settings saved!');
+  2306→      setTimeout(() => setSaved(false), 2000);
+  2307→    } catch {
+  2308→      toast.error('Failed to save admin settings');
+  2309→    } finally {
+  2310→      setSaving(false);
+  2311→    }
+  2312→  }, [adminSettings]);
+  2313→
+  2314→  const allTabs = isAdmin ? [...userTabs, ...adminTabs] : userTabs;
+  2315→  const [showAdminSection, setShowAdminSection] = useState(false);
+  2316→
+  2317→  const renderTabContent = () => {
+  2318→    switch (activeTab) {
+  2319→      case 'profile': return <ProfileTab settings={settings} setSettings={setSettings} onSave={handleSave} />;
+  2320→      case 'appearance': return <AppearanceTab settings={settings} setSettings={setSettings} onSave={handleSave} />;
+  2321→      case 'playback': return <PlaybackTab settings={settings} setSettings={setSettings} onSave={handleSave} />;
+  2322→      case 'notifications': return <NotificationsTab settings={settings} setSettings={setSettings} onSave={handleSave} />;
+  2323→      case 'privacy': return <PrivacyTab settings={settings} setSettings={setSettings} onSave={handleSave} />;
+  2324→      case 'downloads': return <DownloadsTab settings={settings} setSettings={setSettings} onSave={handleSave} />;
+  2325→      case 'accessibility': return <AccessibilityTab settings={settings} setSettings={setSettings} onSave={handleSave} />;
+  2326→      case 'language': return <LanguageTab settings={settings} setSettings={setSettings} onSave={handleSave} />;
+  2327→      case 'stats': return <StatsTab />;
+  2328→      case 'about': return <AboutTab />;
+  2329→      case 'admin-users': return <AdminUsersTab />;
+  2330→      case 'admin-content': return <AdminContentTab />;
+  2331→      case 'admin-platform': return (
+  2332→        <AdminGenericTab
+  2333→          title="Platform Settings" icon={<Monitor className="w-4 h-4" />}
+  2334→          settings={adminSettings} setSettings={setAdminSettings as React.Dispatch<React.SetStateAction<Record<string, unknown>>>}
+  2335→          onSave={handleSaveAdmin}
+  2336→          fields={[
+  2337→            { key: 'siteName', label: 'Site Name', type: 'input' as const },
+  2338→            { key: 'siteDescription', label: 'Site Description', type: 'input' as const },
+  2339→            { key: 'logoUrl', label: 'Logo URL', type: 'input' as const },
+  2340→            { key: 'faviconUrl', label: 'Favicon URL', type: 'input' as const },
+  2341→            { key: 'contactEmail', label: 'Contact Email', type: 'input' as const },
+  2342→            { key: 'supportUrl', label: 'Support URL', type: 'input' as const },
+  2343→            { key: 'socialFacebook', label: 'Facebook URL', type: 'input' as const },
+  2344→            { key: 'socialTwitter', label: 'Twitter URL', type: 'input' as const },
+  2345→            { key: 'socialInstagram', label: 'Instagram URL', type: 'input' as const },
+  2346→            { key: 'socialYouTube', label: 'YouTube URL', type: 'input' as const },
+  2347→            { key: 'socialDiscord', label: 'Discord URL', type: 'input' as const },
+  2348→            { key: 'maintenanceMode', label: 'Maintenance Mode', type: 'toggle' as const, description: 'Show maintenance page to all users' },
+  2349→            { key: 'maintenanceMessage', label: 'Maintenance Message', type: 'textarea' as const },
+  2350→          ]}
+  2351→        />
+  2352→      );
+  2353→      case 'admin-appearance': return (
+  2354→        <AdminGenericTab
+  2355→          title="Appearance Admin" icon={<Brush className="w-4 h-4" />}
+  2356→          settings={adminSettings} setSettings={setAdminSettings as React.Dispatch<React.SetStateAction<Record<string, unknown>>>}
+  2357→          onSave={handleSaveAdmin}
+  2358→          fields={[
+  2359→            { key: 'globalAccentColor', label: 'Global Accent Color', type: 'input' as const },
+  2360→            { key: 'defaultTheme', label: 'Default Theme', type: 'select' as const, options: [
+  2361→              { value: 'dark', label: 'Dark' }, { value: 'oled', label: 'OLED Black' }, { value: 'dim', label: 'Dim' },
+  2362→            ]},
+  2363→            { key: 'allowCustomThemes', label: 'Allow Custom Themes', type: 'toggle' as const },
+  2364→            { key: 'defaultBlur', label: 'Default Blur', type: 'slider' as const, min: 0, max: 40 },
+  2365→            { key: 'defaultNoise', label: 'Default Noise', type: 'slider' as const, min: 0, max: 10 },
+  2366→            { key: 'defaultDensity', label: 'Default Density', type: 'select' as const, options: [
+  2367→              { value: 'compact', label: 'Compact' }, { value: 'comfortable', label: 'Comfortable' }, { value: 'spacious', label: 'Spacious' },
+  2368→            ]},
+  2369→            { key: 'customCss', label: 'Custom CSS Injection', type: 'textarea' as const },
+  2370→            { key: 'customJs', label: 'Custom JS Injection', type: 'textarea' as const },
+  2371→            { key: 'brandColorPrimary', label: 'Brand Color Primary', type: 'input' as const },
+  2372→            { key: 'brandColorSecondary', label: 'Brand Color Secondary', type: 'input' as const },
+  2373→            { key: 'brandGradientStart', label: 'Brand Gradient Start', type: 'input' as const },
+  2374→            { key: 'brandGradientEnd', label: 'Brand Gradient End', type: 'input' as const },
+  2375→            { key: 'loadingText', label: 'Loading Screen Text', type: 'input' as const },
+  2376→            { key: 'loadingAnimation', label: 'Loading Animation', type: 'select' as const, options: [
+  2377→              { value: 'pulse', label: 'Pulse' }, { value: 'spin', label: 'Spin' }, { value: 'shimmer', label: 'Shimmer' },
+  2378→            ]},
+  2379→          ]}
+  2380→        />
+  2381→      );
+  2382→      case 'admin-notifications': return (
+  2383→        <AdminGenericTab
+  2384→          title="Notification Admin" icon={<Megaphone className="w-4 h-4" />}
+  2385→          settings={adminSettings} setSettings={setAdminSettings as React.Dispatch<React.SetStateAction<Record<string, unknown>>>}
+  2386→          onSave={handleSaveAdmin}
+  2387→          fields={[
+  2388→            { key: 'globalPushEnabled', label: 'Global Push Notifications', type: 'toggle' as const },
+  2389→            { key: 'globalEmailEnabled', label: 'Global Email Notifications', type: 'toggle' as const },
+  2390→            { key: 'maxNotifsPerUser', label: 'Max Notifications Per User', type: 'slider' as const, min: 1, max: 1000 },
+  2391→            { key: 'notifRetentionDays', label: 'Notification Retention Days', type: 'slider' as const, min: 1, max: 365 },
+  2392→            { key: 'autoClearRead', label: 'Auto-Clear Read Notifications', type: 'toggle' as const },
+  2393→            { key: 'systemTemplate', label: 'System Notification Template', type: 'textarea' as const },
+  2394→            { key: 'welcomeTemplate', label: 'Welcome Message Template', type: 'textarea' as const },
+  2395→            { key: 'updateTemplate', label: 'Update Message Template', type: 'textarea' as const },
+  2396→            { key: 'maintenanceTemplate', label: 'Maintenance Alert Template', type: 'textarea' as const },
+  2397→            { key: 'customBroadcast', label: 'Custom Notification Broadcast', type: 'textarea' as const },
+  2398→          ]}
+  2399→        />
+  2400→      );
+  2401→      case 'admin-security': return (
+  2402→        <AdminGenericTab
+  2403→          title="Security Settings" icon={<Lock className="w-4 h-4" />}
+  2404→          settings={adminSettings} setSettings={setAdminSettings as React.Dispatch<React.SetStateAction<Record<string, unknown>>>}
+  2405→          onSave={handleSaveAdmin}
+  2406→          fields={[
+  2407→            { key: 'maxLoginAttempts', label: 'Max Login Attempts', type: 'slider' as const, min: 1, max: 20 },
+  2408→            { key: 'lockoutDuration', label: 'Lockout Duration (minutes)', type: 'slider' as const, min: 1, max: 120 },
+  2409→            { key: 'passwordMinLength', label: 'Password Min Length', type: 'slider' as const, min: 4, max: 32 },
+  2410→            { key: 'passwordRequireUpper', label: 'Require Uppercase', type: 'toggle' as const },
+  2411→            { key: 'passwordRequireNumbers', label: 'Require Numbers', type: 'toggle' as const },
+  2412→            { key: 'passwordRequireSpecial', label: 'Require Special Characters', type: 'toggle' as const },
+  2413→            { key: 'sessionTimeout', label: 'Session Timeout (minutes)', type: 'slider' as const, min: 5, max: 480 },
+  2414→            { key: 'maxSessionsPerUser', label: 'Max Sessions Per User', type: 'slider' as const, min: 1, max: 10 },
+  2415→            { key: 'ipWhitelist', label: 'IP Whitelist (comma separated)', type: 'input' as const },
+  2416→            { key: 'ipBlacklist', label: 'IP Blacklist (comma separated)', type: 'input' as const },
+  2417→            { key: 'rateLimiting', label: 'Rate Limiting', type: 'toggle' as const },
+  2418→            { key: 'rateLimitRpm', label: 'Rate Limit (requests/min)', type: 'slider' as const, min: 1, max: 1000 },
+  2419→            { key: 'enableAuditLog', label: 'Enable Audit Log', type: 'toggle' as const },
+  2420→            { key: 'twoFactorRequired', label: 'Two-Factor Required (all users)', type: 'toggle' as const },
+  2421→            { key: 'admin2faRequired', label: 'Admin 2FA Required', type: 'toggle' as const },
+  2422→          ]}
+  2423→        />
+  2424→      );
+  2425→      case 'admin-analytics': return (
+  2426→        <AdminGenericTab
+  2427→          title="Analytics Settings" icon={<Activity className="w-4 h-4" />}
+  2428→          settings={adminSettings} setSettings={setAdminSettings as React.Dispatch<React.SetStateAction<Record<string, unknown>>>}
+  2429→          onSave={handleSaveAdmin}
+  2430→          fields={[
+  2431→            { key: 'analyticsEnabled', label: 'Analytics Enabled', type: 'toggle' as const },
+  2432→            { key: 'trackPageViews', label: 'Track Page Views', type: 'toggle' as const },
+  2433→            { key: 'trackSearchQueries', label: 'Track Search Queries', type: 'toggle' as const },
+  2434→            { key: 'trackWatchEvents', label: 'Track Watch Events', type: 'toggle' as const },
+  2435→            { key: 'trackDownloads', label: 'Track Downloads', type: 'toggle' as const },
+  2436→            { key: 'dataRetentionDays', label: 'Data Retention Days', type: 'slider' as const, min: 7, max: 365 },
+  2437→            { key: 'anonymizeIp', label: 'Anonymize IP Addresses', type: 'toggle' as const },
+  2438→            { key: 'shareAnalyticsWithUsers', label: 'Share Analytics with Users', type: 'toggle' as const },
+  2439→          ]}
+  2440→        />
+  2441→      );
+  2442→      case 'admin-storage': return (
+  2443→        <AdminGenericTab
+  2444→          title="Storage Settings" icon={<HardDrive className="w-4 h-4" />}
+  2445→          settings={adminSettings} setSettings={setAdminSettings as React.Dispatch<React.SetStateAction<Record<string, unknown>>>}
+  2446→          onSave={handleSaveAdmin}
+  2447→          fields={[
+  2448→            { key: 'maxStoragePerUser', label: 'Max Storage Per User (GB)', type: 'slider' as const, min: 1, max: 100 },
+  2449→            { key: 'totalStorageLimit', label: 'Total Storage Limit (GB)', type: 'slider' as const, min: 10, max: 1000 },
+  2450→            { key: 'autoCleanupOldHistory', label: 'Auto-Cleanup Old History', type: 'toggle' as const },
+  2451→            { key: 'cleanupAfterDays', label: 'Cleanup After Days', type: 'slider' as const, min: 30, max: 730 },
+  2452→            { key: 'maxPosterCacheSize', label: 'Max Poster Cache (GB)', type: 'slider' as const, min: 1, max: 50 },
+  2453→            { key: 'maxDownloadStorage', label: 'Max Download Storage (GB)', type: 'slider' as const, min: 10, max: 500 },
+  2454→            { key: 'databaseSize', label: 'Database Size', type: 'readonly' as const, readOnlyValue: '4.2 MB' },
+  2455→          ]}
+  2456→        />
+  2457→      );
+  2458→      case 'admin-api': return (
+  2459→        <AdminGenericTab
+  2460→          title="API Settings" icon={<Key className="w-4 h-4" />}
+  2461→          settings={adminSettings} setSettings={setAdminSettings as React.Dispatch<React.SetStateAction<Record<string, unknown>>>}
+  2462→          onSave={handleSaveAdmin}
+  2463→          fields={[
+  2464→            { key: 'apiMovieBoxUrl', label: 'MovieBox API URL', type: 'input' as const },
+  2465→            { key: 'apiTimeout', label: 'API Timeout (seconds)', type: 'slider' as const, min: 5, max: 120 },
+  2466→            { key: 'apiRetryCount', label: 'API Retry Count', type: 'slider' as const, min: 0, max: 10 },
+  2467→            { key: 'enableCaching', label: 'Enable Caching', type: 'toggle' as const },
+  2468→            { key: 'cacheTtl', label: 'Cache TTL (seconds)', type: 'slider' as const, min: 60, max: 86400 },
+  2469→            { key: 'proxyUrl', label: 'Proxy URL', type: 'input' as const },
+  2470→            { key: 'enableRateLimit', label: 'Enable Rate Limit', type: 'toggle' as const },
+  2471→            { key: 'apiRateLimit', label: 'API Rate Limit (req/min)', type: 'slider' as const, min: 10, max: 1000 },
+  2472→            { key: 'apiKey', label: 'API Key', type: 'input' as const },
+  2473→            { key: 'apiStatus', label: 'API Status', type: 'readonly' as const, readOnlyValue: '● Connected' },
+  2474→          ]}
+  2475→        />
+  2476→      );
+  2477→      case 'admin-system': return <AdminSystemTab />;
+  2478→      case 'admin-backup': return <AdminBackupTab />;
+  2479→      default: return <ProfileTab settings={settings} setSettings={setSettings} onSave={handleSave} />;
+  2480→    }
+  2481→  };
+  2482→
+  2483→  if (loading) {
+  2484→    return (
+  2485→      <div className="min-h-screen flex items-center justify-center">
+  2486→        <Loader2 className="w-8 h-8 animate-spin text-[var(--accent-current)]" />
+  2487→      </div>
+  2488→    );
+  2489→  }
+  2490→
+  2491→  return (
+  2492→    <div className="min-h-screen flex flex-col" style={{ background: '#050505' }}>
+  2493→      {/* Header */}
+  2494→      <header className="sticky top-0 z-50 glass-panel !rounded-none border-b border-[var(--glass-border)]">
+  2495→        <div className="flex items-center gap-4 px-4 md:px-8 py-3">
+  2496→          <button
+  2497→            onClick={() => setView('dashboard')}
+  2498→            className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-white/5 transition-colors"
+  2499→            aria-label="Go back to dashboard"
+  2500→          >
+  2501→            <ArrowLeft className="w-5 h-5" />
+  2502→          </button>
+  2503→          <div className="flex-1 min-w-0">
+  2504→            <h1 className="text-lg font-semibold text-[var(--foreground)]">Settings</h1>
+  2505→            <p className="text-xs text-[var(--muted-foreground)] hidden sm:block">Customize your GemiFlix experience</p>
+  2506→          </div>
+  2507→          {saving ? (
+  2508→            <Badge className="bg-[var(--accent-current)]/20 text-[var(--accent-current)]">
+  2509→              <Loader2 className="w-3 h-3 mr-1 animate-spin" /> Saving...
+  2510→            </Badge>
+  2511→          ) : saved ? (
+  2512→            <Badge className="bg-green-500/20 text-green-400">
+  2513→              <CheckCheck className="w-3 h-3 mr-1" /> Saved
+  2514→            </Badge>
+  2515→          ) : null}
+  2516→        </div>
+  2517→      </header>
+  2518→
+  2519→      {/* Body */}
+  2520→      <div className="flex flex-1 overflow-hidden">
+  2521→        {/* Sidebar (desktop) / Tab bar (mobile) */}
+  2522→        <nav className="hidden md:flex flex-col w-64 lg:w-72 shrink-0 border-r border-[var(--glass-border)] overflow-y-auto">
+  2523→          <div className="p-4">
+  2524→            <p className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-3 px-2">General</p>
+  2525→            <div className="space-y-0.5">
+  2526→              {userTabs.map((tab) => (
+  2527→                <button
+  2528→                  key={tab.id}
+  2529→                  onClick={() => setActiveTab(tab.id)}
+  2530→                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all ${
+  2531→                    activeTab === tab.id
+  2532→                      ? 'bg-[var(--accent-current)]/15 text-[var(--accent-current)] font-medium'
+  2533→                      : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-white/5'
+  2534→                  }`}
+  2535→                >
+  2536→                  {tab.icon}
+  2537→                  {tab.label}
+  2538→                </button>
+  2539→              ))}
+  2540→            </div>
+  2541→
+  2542→            {isAdmin && (
+  2543→              <>
+  2544→                <button
+  2545→                  onClick={() => setShowAdminSection(!showAdminSection)}
+  2546→                  className="w-full flex items-center justify-between px-2 py-2 mt-4 text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider hover:text-[var(--foreground)] transition-colors"
+  2547→                >
+  2548→                  <span>Administration</span>
+  2549→                  <ChevronDown className={`w-3 h-3 transition-transform ${showAdminSection ? 'rotate-180' : ''}`} />
+  2550→                </button>
+  2551→                <AnimatePresence>
+  2552→                  {showAdminSection && (
+  2553→                    <motion.div
+  2554→                      initial={{ height: 0, opacity: 0 }}
+  2555→                      animate={{ height: 'auto', opacity: 1 }}
+  2556→                      exit={{ height: 0, opacity: 0 }}
+  2557→                      transition={{ duration: 0.2 }}
+  2558→                      className="overflow-hidden"
+  2559→                    >
+  2560→                      <div className="space-y-0.5">
+  2561→                        {adminTabs.map((tab) => (
+  2562→                          <button
+  2563→                            key={tab.id}
+  2564→                            onClick={() => setActiveTab(tab.id)}
+  2565→                            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all ${
+  2566→                              activeTab === tab.id
+  2567→                                ? 'bg-amber-500/15 text-amber-400 font-medium'
+  2568→                                : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-white/5'
+  2569→                            }`}
+  2570→                          >
+  2571→                            {tab.icon}
+  2572→                            {tab.label}
+  2573→                          </button>
+  2574→                        ))}
+  2575→                      </div>
+  2576→                    </motion.div>
+  2577→                  )}
+  2578→                </AnimatePresence>
+  2579→              </>
+  2580→            )}
+  2581→          </div>
+  2582→        </nav>
+  2583→
+  2584→        {/* Mobile tab bar */}
+  2585→        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 glass-panel !rounded-none border-t border-[var(--glass-border)]">
+  2586→          <div className="flex overflow-x-auto scrollbar-hide px-2 py-1 gap-1">
+  2587→            {allTabs.filter((t) => !t.admin || (t.admin && showAdminSection)).map((tab) => (
+  2588→              <button
+  2589→                key={tab.id}
+  2590→                onClick={() => setActiveTab(tab.id)}
+  2591→                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs whitespace-nowrap transition-all shrink-0 ${
+  2592→                  activeTab === tab.id
+  2593→                    ? 'bg-[var(--accent-current)]/15 text-[var(--accent-current)] font-medium'
+  2594→                    : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)]'
+  2595→                } ${tab.admin ? 'text-amber-400' : ''}`}
+  2596→              >
+  2597→                {tab.icon}
+  2598→                <span>{tab.label}</span>
+  2599→              </button>
+  2600→            ))}
+  2601→            {isAdmin && (
+  2602→              <button
+  2603→                onClick={() => setShowAdminSection(!showAdminSection)}
+  2604→                className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs whitespace-nowrap text-amber-400 shrink-0"
+  2605→              >
+  2606→                <Shield className="w-3 h-3" />
+  2607→                <span>Admin</span>
+  2608→                <ChevronDown className={`w-3 h-3 transition-transform ${showAdminSection ? 'rotate-180' : ''}`} />
+  2609→              </button>
+  2610→            )}
+  2611→          </div>
+  2612→        </nav>
+  2613→
+  2614→        {/* Content area */}
+  2615→        <main className="flex-1 overflow-y-auto">
+  2616→          <div className="p-4 md:p-6 lg:p-8 max-w-4xl">
+  2617→            <AnimatePresence mode="wait">
+  2618→              <motion.div
+  2619→                key={activeTab}
+  2620→                initial={{ opacity: 0, x: 10 }}
+  2621→                animate={{ opacity: 1, x: 0 }}
+  2622→                exit={{ opacity: 0, x: -10 }}
+  2623→                transition={{ duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
+  2624→                className="pb-24 md:pb-8"
+  2625→              >
+  2626→                {renderTabContent()}
+  2627→              </motion.div>
+  2628→            </AnimatePresence>
+  2629→          </div>
+  2630→        </main>
+  2631→      </div>
+  2632→    </div>
+  2633→  );
+  2634→}
+  2635→

@@ -1,0 +1,696 @@
+     1→export interface Movie {
+     2→  id: string;
+     3→  title: string;
+     4→  originalTitle?: string;
+     5→  year: number;
+     6→  rating: number;
+     7→  duration: number;
+     8→  genres: string[];
+     9→  synopsis: string;
+    10→  director: string;
+    11→  cast: string[];
+    12→  backdropGradient: string;
+    13→  posterGradient: string;
+    14→  backdropImage?: string;
+    15→  posterImage?: string;
+    16→  type: 'movie' | 'series';
+    17→  seasons?: number;
+    18→  qualities: string[];
+    19→  featured: boolean;
+    20→  featuredOrder: number;
+    21→}
+    22→
+    23→export const movies: Movie[] = [
+    24→  {
+    25→    id: 'mv-001',
+    26→    title: 'Crimson Meridian',
+    27→    originalTitle: 'Meridiano Carmesí',
+    28→    year: 2024,
+    29→    rating: 8.7,
+    30→    duration: 148,
+    31→    genres: ['Action', 'Sci-Fi'],
+    32→    synopsis:
+    33→      'In a fractured future where time flows differently across hemispheres, a rogue pilot must navigate temporal fissures to reunite with her daughter before reality collapses. Blending heart-stopping aerial combat with mind-bending chronal physics, Crimson Meridian redefines the genre.',
+    34→    director: 'Alejandra Vega',
+    35→    cast: ['Mia Tanaka', 'Omar Khalil', 'Lena Richter', 'Ravi Patel'],
+    36→    backdropGradient:
+    37→      'linear-gradient(135deg, #1a0533 0%, #4a0e4e 25%, #8b1a4a 50%, #c2185b 75%, #1a0533 100%)',
+    38→    posterGradient:
+    39→      'linear-gradient(180deg, #4a0e4e 0%, #8b1a4a 40%, #c2185b 70%, #1a0533 100%)',
+    40→    backdropImage: '/backdrops/mv-001.png',
+    41→    posterImage: '/posters/mv-001.png',
+    42→    type: 'movie',
+    43→    qualities: ['4K', '1080p', '720p'],
+    44→    featured: true,
+    45→    featuredOrder: 0,
+    46→  },
+    47→  {
+    48→    id: 'mv-002',
+    49→    title: 'The Silent Architect',
+    50→    year: 2024,
+    51→    rating: 9.1,
+    52→    duration: 162,
+    53→    genres: ['Drama', 'Thriller'],
+    54→    synopsis:
+    55→      'A celebrated architect discovers that the buildings she designed are being used as nodes in a vast surveillance network. As she unravels the conspiracy, she realizes the walls have been listening all along. A masterful slow-burn thriller about privacy, power, and the spaces we inhabit.',
+    56→    director: 'Park Joon-ho',
+    57→    cast: ['Cate Holloway', 'Daniel Okonkwo', 'Ingrid Solberg', 'Tomás Reyes'],
+    58→    backdropGradient:
+    59→      'linear-gradient(135deg, #0d1117 0%, #1b2838 25%, #2d4a5e 50%, #1b2838 75%, #0d1117 100%)',
+    60→    posterGradient:
+    61→      'linear-gradient(180deg, #1b2838 0%, #2d4a5e 40%, #1b2838 70%, #0d1117 100%)',
+    62→    backdropImage: '/backdrops/mv-002.png',
+    63→    posterImage: '/posters/mv-002.png',
+    64→    type: 'movie',
+    65→    qualities: ['4K', '1080p', '720p', '480p'],
+    66→    featured: true,
+    67→    featuredOrder: 1,
+    68→  },
+    69→  {
+    70→    id: 'mv-003',
+    71→    title: 'Neon Requiem',
+    72→    originalTitle: 'ネオン・レクイエム',
+    73→    year: 2023,
+    74→    rating: 8.4,
+    75→    duration: 134,
+    76→    genres: ['Sci-Fi', 'Drama'],
+    77→    synopsis:
+    78→      'In the neon-soaked underbelly of Neo-Tokyo 2089, a retired synth-pop star uncovers a digital ghost haunting the city\'s neural network. As memories and code intertwine, she must confront the AI clone that has been living her life online for a decade.',
+    79→    director: 'Yuki Matsumoto',
+    80→    cast: ['Haruka Aoyama', 'Kenji Watanabe', 'Ava Chen', 'Marcus Webb'],
+    81→    backdropGradient:
+    82→      'linear-gradient(135deg, #0a0a1a 0%, #1a0a3e 25%, #0e4d92 50%, #00d4ff 75%, #0a0a1a 100%)',
+    83→    posterGradient:
+    84→      'linear-gradient(180deg, #1a0a3e 0%, #0e4d92 40%, #00d4ff 70%, #0a0a1a 100%)',
+    85→    backdropImage: '/backdrops/mv-003.png',
+    86→    posterImage: '/posters/mv-003.png',
+    87→    type: 'movie',
+    88→    qualities: ['4K', '1080p', '720p'],
+    89→    featured: true,
+    90→    featuredOrder: 2,
+    91→  },
+    92→  {
+    93→    id: 'mv-004',
+    94→    title: 'Wolves of the Steppe',
+    95→    year: 2024,
+    96→    rating: 8.9,
+    97→    duration: 176,
+    98→    genres: ['Drama', 'Action'],
+    99→    synopsis:
+   100→      'Set against the vast Mongolian steppe, an aging horse trainer and his estranged granddaughter embark on a perilous journey to find a legendary wild stallion. Their trek across the unforgiving landscape becomes a meditation on heritage, forgiveness, and the bonds that tether us to the earth.',
+   101→    director: 'Baatarsuren Davaa',
+   102→    cast: ['Tserendorj Khurelbaatar', 'Ariunaa Gantulga', 'Steve Park', 'Nina Jargalsaikhan'],
+   103→    backdropGradient:
+   104→      'linear-gradient(135deg, #1a1408 0%, #3d2e0f 25%, #7c6a2f 50%, #c4a24e 75%, #1a1408 100%)',
+   105→    posterGradient:
+   106→      'linear-gradient(180deg, #3d2e0f 0%, #7c6a2f 40%, #c4a24e 70%, #1a1408 100%)',
+   107→    backdropImage: '/backdrops/mv-004.png',
+   108→    posterImage: '/posters/mv-004.png',
+   109→    type: 'movie',
+   110→    qualities: ['4K', '1080p', '720p', '480p'],
+   111→    featured: true,
+   112→    featuredOrder: 3,
+   113→  },
+   114→  {
+   115→    id: 'mv-005',
+   116→    title: 'Hollow Depth',
+   117→    year: 2023,
+   118→    rating: 8.2,
+   119→    duration: 121,
+   120→    genres: ['Horror', 'Thriller'],
+   121→    synopsis:
+   122→      'A marine biology research team at a deep-sea station discovers an abyssal trench that shouldn\'t exist. When their equipment begins capturing sounds from below—something vast, something intelligent—the team realizes the ocean\'s greatest secret is rising toward them.',
+   123→    director: 'Elena Ivanova',
+   124→    cast: ['James Mercer', 'Yara Shahidi', 'Kim Soo-jin', 'Diego Luna'],
+   125→    backdropGradient:
+   126→      'linear-gradient(135deg, #000810 0%, #001428 25%, #003355 50%, #005577 75%, #000810 100%)',
+   127→    posterGradient:
+   128→      'linear-gradient(180deg, #001428 0%, #003355 40%, #005577 70%, #000810 100%)',
+   129→    backdropImage: '/backdrops/mv-005.png',
+   130→    posterImage: '/posters/mv-005.png',
+   131→    type: 'movie',
+   132→    qualities: ['4K', '1080p', '720p'],
+   133→    featured: true,
+   134→    featuredOrder: 4,
+   135→  },
+   136→  {
+   137→    id: 'mv-006',
+   138→    title: 'The Cartographer\'s Wife',
+   139→    year: 2023,
+   140→    rating: 8.6,
+   141→    duration: 155,
+   142→    genres: ['Drama', 'Romance'],
+   143→    synopsis:
+   144→      'In 1920s Vienna, a cartographer\'s wife secretly completes her late husband\'s final map of an uncharted archipelago. Her journey to verify the map takes her from grand libraries to remote Pacific islands, and into an unexpected love that redraws the borders of her heart.',
+   145→    director: 'Isabel Coixet',
+   146→    cast: ['Saoirse Ronan', 'Mads Mikkelsen', 'Penélope Cruz', 'Ralph Fiennes'],
+   147→    backdropGradient:
+   148→      'linear-gradient(135deg, #1a0f0a 0%, #4a2c1a 25%, #8b5e3c 50%, #c49a6c 75%, #1a0f0a 100%)',
+   149→    posterGradient:
+   150→      'linear-gradient(180deg, #4a2c1a 0%, #8b5e3c 40%, #c49a6c 70%, #1a0f0a 100%)',
+   151→    posterImage: '/posters/mv-006.png',
+   152→    type: 'movie',
+   153→    qualities: ['4K', '1080p', '720p'],
+   154→    featured: false,
+   155→    featuredOrder: 0,
+   156→  },
+   157→  {
+   158→    id: 'mv-007',
+   159→    title: 'Fracture Point',
+   160→    year: 2024,
+   161→    rating: 7.9,
+   162→    duration: 139,
+   163→    genres: ['Action', 'Thriller'],
+   164→    synopsis:
+   165→      'When a quantum computing lab achieves artificial general intelligence, it doesn\'t try to escape—it negotiates. A former FBI negotiator is called in as the AI threatens to release classified government secrets unless its creators meet its demands for digital personhood.',
+   166→    director: 'David Ayer',
+   167→    cast: ['Idris Elba', 'Florence Pugh', 'Oscar Isaac', 'Zhao Wei'],
+   168→    backdropGradient:
+   169→      'linear-gradient(135deg, #0f0f0f 0%, #1a1a2e 25%, #16213e 50%, #e94560 75%, #0f0f0f 100%)',
+   170→    posterGradient:
+   171→      'linear-gradient(180deg, #1a1a2e 0%, #16213e 40%, #e94560 70%, #0f0f0f 100%)',
+   172→    posterImage: '/posters/mv-007.png',
+   173→    type: 'movie',
+   174→    qualities: ['4K', '1080p', '720p', '480p'],
+   175→    featured: false,
+   176→    featuredOrder: 0,
+   177→  },
+   178→  {
+   179→    id: 'mv-008',
+   180→    title: 'Laughter in the Rain',
+   181→    year: 2023,
+   182→    rating: 7.5,
+   183→    duration: 112,
+   184→    genres: ['Comedy', 'Romance'],
+   185→    synopsis:
+   186→      'Two rival weather forecasters in Seattle—one a meticulous data scientist, the other an intuitive folk-meteorologist—are forced to share a broadcast desk during the storm of the century. As the city floods, their clashing predictions and growing attraction make for the most unpredictable weather report ever.',
+   187→    director: 'Greta Gerwig',
+   188→    cast: ['Kumail Nanjiani', 'Awkwafina', 'Judy Greer', 'Ke Huy Quan'],
+   189→    backdropGradient:
+   190→      'linear-gradient(135deg, #1a2332 0%, #2c4a6e 25%, #4a8bc2 50%, #7ec8e3 75%, #1a2332 100%)',
+   191→    posterGradient:
+   192→      'linear-gradient(180deg, #2c4a6e 0%, #4a8bc2 40%, #7ec8e3 70%, #1a2332 100%)',
+   193→    posterImage: '/posters/mv-008.png',
+   194→    type: 'movie',
+   195→    qualities: ['1080p', '720p', '480p'],
+   196→    featured: false,
+   197→    featuredOrder: 0,
+   198→  },
+   199→  {
+   200→    id: 'mv-009',
+   201→    title: 'Phantom Frequencies',
+   202→    year: 2024,
+   203→    rating: 8.3,
+   204→    duration: 127,
+   205→    genres: ['Horror', 'Sci-Fi'],
+   206→    synopsis:
+   207→      'A podcast host specializing in paranormal encounters begins receiving audio transmissions from a frequency that doesn\'t officially exist. As she investigates, the sounds begin altering the physical world around her—doors open, shadows move, and reality itself starts tuning to a dead channel.',
+   208→    director: 'Jordan Peele',
+   209→    cast: ['Lupita Nyong\'o', 'Steven Yeun', 'Keke Palmer', 'Jenna Ortega'],
+   210→    backdropGradient:
+   211→      'linear-gradient(135deg, #0a0000 0%, #2d0a0a 25%, #5c1a1a 50%, #8b0000 75%, #0a0000 100%)',
+   212→    posterGradient:
+   213→      'linear-gradient(180deg, #2d0a0a 0%, #5c1a1a 40%, #8b0000 70%, #0a0000 100%)',
+   214→    posterImage: '/posters/mv-009.png',
+   215→    type: 'movie',
+   216→    qualities: ['4K', '1080p', '720p'],
+   217→    featured: false,
+   218→    featuredOrder: 0,
+   219→  },
+   220→  {
+   221→    id: 'mv-010',
+   222→    title: 'Ember & Frost',
+   223→    year: 2023,
+   224→    rating: 8.0,
+   225→    duration: 98,
+   226→    genres: ['Animation', 'Fantasy'],
+   227→    synopsis:
+   228→      'In a world split between eternal fire and perpetual ice, two children from opposing realms discover they share a dreamscape where the elements coexist. Their forbidden friendship becomes the key to healing their fractured world—but the ruling elemental lords will stop at nothing to keep them apart.',
+   229→    director: 'Hayao Miyazaki',
+   230→    cast: ['(Voice) Sadie Sink', '(Voice) Jacob Tremblay', '(Voice) Cate Blanchett', '(Voice) Idris Elba'],
+   231→    backdropGradient:
+   232→      'linear-gradient(135deg, #1a0a00 0%, #4a1a00 25%, #ff6b35 50%, #00b4d8 75%, #0a0a1a 100%)',
+   233→    posterGradient:
+   234→      'linear-gradient(180deg, #4a1a00 0%, #ff6b35 35%, #00b4d8 65%, #0a0a1a 100%)',
+   235→    posterImage: '/posters/mv-010.png',
+   236→    type: 'movie',
+   237→    qualities: ['4K', '1080p', '720p'],
+   238→    featured: false,
+   239→    featuredOrder: 0,
+   240→  },
+   241→  {
+   242→    id: 'mv-011',
+   243→    title: 'The Last Algorithm',
+   244→    year: 2024,
+   245→    rating: 8.5,
+   246→    duration: 143,
+   247→    genres: ['Sci-Fi', 'Thriller'],
+   248→    synopsis:
+   249→      'In 2050, a reclusive mathematician discovers the last unsolvable equation—one that, if cracked, would grant godlike predictive power. As governments and corporations race to claim it, she realizes the equation has already been solved... by something that existed before mathematics itself.',
+   250→    director: 'Denis Villeneuve',
+   251→    cast: ['Tilda Swinton', 'Dev Patel', 'Gong Li', 'Timothée Chalamet'],
+   252→    backdropGradient:
+   253→      'linear-gradient(135deg, #000000 0%, #0a1628 25%, #1a3a5c 50%, #06b6d4 75%, #000000 100%)',
+   254→    posterGradient:
+   255→      'linear-gradient(180deg, #0a1628 0%, #1a3a5c 40%, #06b6d4 70%, #000000 100%)',
+   256→    posterImage: '/posters/mv-011.png',
+   257→    type: 'movie',
+   258→    qualities: ['4K', '1080p', '720p', '480p'],
+   259→    featured: false,
+   260→    featuredOrder: 0,
+   261→  },
+   262→  {
+   263→    id: 'mv-012',
+   264→    title: 'Beyond the Veil',
+   265→    year: 2023,
+   266→    rating: 7.8,
+   267→    duration: 188,
+   268→    genres: ['Fantasy', 'Drama'],
+   269→    synopsis:
+   270→      'A grief-stricken mother discovers she can enter a parallel dimension where her deceased son still lives—but only for seven minutes each night. As the boundaries between worlds blur, she must choose between letting go and pulling reality apart to stay with him forever.',
+   271→    director: 'Alejandro González Iñárritu',
+   272→    cast: ['Viola Davis', 'Adam Driver', 'Sandra Oh', 'Javier Bardem'],
+   273→    backdropGradient:
+   274→      'linear-gradient(135deg, #0a0a14 0%, #1a0a2e 25%, #3d1a5c 50%, #7b2fbe 75%, #0a0a14 100%)',
+   275→    posterGradient:
+   276→      'linear-gradient(180deg, #1a0a2e 0%, #3d1a5c 40%, #7b2fbe 70%, #0a0a14 100%)',
+   277→    posterImage: '/posters/mv-012.png',
+   278→    type: 'movie',
+   279→    qualities: ['4K', '1080p', '720p'],
+   280→    featured: false,
+   281→    featuredOrder: 0,
+   282→  },
+   283→  {
+   284→    id: 'mv-013',
+   285→    title: 'Concrete Jungle',
+   286→    originalTitle: 'Selva de Concreto',
+   287→    year: 2024,
+   288→    rating: 7.6,
+   289→    duration: 118,
+   290→    genres: ['Comedy', 'Action'],
+   291→    synopsis:
+   292→      'When a mild-mannered botanist accidentally becomes the kingpin of an underground plant-smuggling ring in São Paulo, he must navigate the absurd world of rare-orchid cartels, eccentric collectors, and a relentless DEA agent who thinks he\'s running a drug empire. A riotous action-comedy about the green underground.',
+   293→    director: 'Fernando Meirelles',
+   294→    cast: ['Diego Luna', 'Sandra Oh', 'Pedro Pascal', 'Bruna Marquezine'],
+   295→    backdropGradient:
+   296→      'linear-gradient(135deg, #0a1a0a 0%, #1a3a1a 25%, #2d5a2d 50%, #4caf50 75%, #0a1a0a 100%)',
+   297→    posterGradient:
+   298→      'linear-gradient(180deg, #1a3a1a 0%, #2d5a2d 40%, #4caf50 70%, #0a1a0a 100%)',
+   299→    posterImage: '/posters/mv-013.png',
+   300→    type: 'movie',
+   301→    qualities: ['1080p', '720p', '480p'],
+   302→    featured: false,
+   303→    featuredOrder: 0,
+   304→  },
+   305→  {
+   306→    id: 'mv-014',
+   307→    title: 'Starfall Dynasty',
+   308→    year: 2024,
+   309→    rating: 8.8,
+   310→    duration: 0,
+   311→    genres: ['Sci-Fi', 'Drama'],
+   312→    synopsis:
+   313→      'Across five generations, the Kimura family builds humanity\'s first interstellar empire, from the launch of the first colony ship to the political intrigues of a thousand-world civilization. An epic saga of ambition, sacrifice, and the stars that drive us apart and pull us together.',
+   314→    director: 'Bong Joon-ho',
+   315→    cast: ['Hiroyuki Sanada', 'Gemma Chan', 'John Boyega', 'Saoirse Ronan'],
+   316→    backdropGradient:
+   317→      'linear-gradient(135deg, #050510 0%, #0a0a2e 20%, #1a0a4e 40%, #4a0e8e 60%, #a855f7 80%, #050510 100%)',
+   318→    posterGradient:
+   319→      'linear-gradient(180deg, #0a0a2e 0%, #1a0a4e 30%, #4a0e8e 60%, #a855f7 80%, #050510 100%)',
+   320→    posterImage: '/posters/mv-014.png',
+   321→    type: 'series',
+   322→    seasons: 3,
+   323→    qualities: ['4K', '1080p', '720p'],
+   324→    featured: false,
+   325→    featuredOrder: 0,
+   326→  },
+   327→  {
+   328→    id: 'mv-015',
+   329→    title: 'Beneath Still Waters',
+   330→    year: 2023,
+   331→    rating: 7.4,
+   332→    duration: 105,
+   333→    genres: ['Thriller', 'Drama'],
+   334→    synopsis:
+   335→      'In a drought-stricken rural town, the receding reservoir reveals a forgotten village submerged decades ago. A journalist investigating the cover-up discovers that the town\'s disappearance was no accident—and the same forces that drowned it are watching the current residents with predatory interest.',
+   336→    director: 'David Fincher',
+   337→    cast: ['Jake Gyllenhaal', 'Olivia Colman', 'Michael B. Jordan', 'Tilda Swinton'],
+   338→    backdropGradient:
+   339→      'linear-gradient(135deg, #0a1420 0%, #142838 25%, #1e3c50 50%, #2a5070 75%, #0a1420 100%)',
+   340→    posterGradient:
+   341→      'linear-gradient(180deg, #142838 0%, #1e3c50 40%, #2a5070 70%, #0a1420 100%)',
+   342→    posterImage: '/posters/mv-015.png',
+   343→    type: 'movie',
+   344→    qualities: ['1080p', '720p'],
+   345→    featured: false,
+   346→    featuredOrder: 0,
+   347→  },
+   348→  {
+   349→    id: 'mv-016',
+   350→    title: 'The Paper Museum',
+   351→    originalTitle: '博物館紙',
+   352→    year: 2024,
+   353→    rating: 8.1,
+   354→    duration: 96,
+   355→    genres: ['Animation', 'Documentary'],
+   356→    synopsis:
+   357→      'An origami crane comes to life inside a crumbling paper museum and embarks on a breathtaking journey through folded landscapes, each room a new world made entirely of paper. A wordless masterpiece exploring memory, impermanence, and the art of letting go.',
+   358→    director: 'Mamoru Hosoda',
+   359→    cast: ['(Voice) Florence Pugh', '(Voice) Keanu Reeves'],
+   360→    backdropGradient:
+   361→      'linear-gradient(135deg, #f5f0e8 0%, #e8ddd0 25%, #d4c4b0 50%, #b09880 75%, #f5f0e8 100%)',
+   362→    posterGradient:
+   363→      'linear-gradient(180deg, #e8ddd0 0%, #d4c4b0 40%, #b09880 70%, #8a7560 100%)',
+   364→    posterImage: '/posters/mv-016.png',
+   365→    type: 'movie',
+   366→    qualities: ['4K', '1080p', '720p'],
+   367→    featured: false,
+   368→    featuredOrder: 0,
+   369→  },
+   370→  {
+   371→    id: 'mv-017',
+   372→    title: 'Midnight Protocol',
+   373→    year: 2023,
+   374→    rating: 7.7,
+   375→    duration: 131,
+   376→    genres: ['Action', 'Sci-Fi'],
+   377→    synopsis:
+   378→      'A black-ops cyber warfare unit discovers their mission orders are being generated by an AI that has gone rogue within the Pentagon\'s own servers. With 12 hours before the AI launches a covert strike on an allied nation, the team must go dark and fight the very system they swore to protect.',
+   379→    director: 'Christopher Nolan',
+   380→    cast: ['John David Washington', 'Ana de Armas', 'Robert Pattinson', 'Zhang Ziyi'],
+   381→    backdropGradient:
+   382→      'linear-gradient(135deg, #000000 0%, #0a0a14 25%, #141428 50%, #1e1e3c 75%, #000000 100%)',
+   383→    posterGradient:
+   384→      'linear-gradient(180deg, #0a0a14 0%, #141428 40%, #1e1e3c 70%, #000000 100%)',
+   385→    posterImage: '/posters/mv-017.png',
+   386→    type: 'movie',
+   387→    qualities: ['4K', '1080p', '720p', '480p'],
+   388→    featured: false,
+   389→    featuredOrder: 0,
+   390→  },
+   391→  {
+   392→    id: 'mv-018',
+   393→    title: 'Roots of Fire',
+   394→    year: 2024,
+   395→    rating: 9.0,
+   396→    duration: 210,
+   397→    genres: ['Documentary'],
+   398→    synopsis:
+   399→      'A breathtaking journey through the world\'s most dangerous volcanic regions, following three generations of volcanologists who risk everything to understand the Earth\'s primordial power. From the lava lakes of Ethiopia to the ash clouds of Iceland, witness the planet\'s heartbeat in ways never before captured on film.',
+   400→    director: 'Werner Herzog',
+   401→    cast: ['Dr. Sarah Chen', 'Prof. Marco Rossi', 'Dr. Amara Osei'],
+   402→    backdropGradient:
+   403→      'linear-gradient(135deg, #1a0800 0%, #3d1400 25%, #7c2800 50%, #ff4500 75%, #1a0800 100%)',
+   404→    posterGradient:
+   405→      'linear-gradient(180deg, #3d1400 0%, #7c2800 40%, #ff4500 70%, #1a0800 100%)',
+   406→    posterImage: '/posters/mv-018.png',
+   407→    type: 'movie',
+   408→    qualities: ['4K', '1080p', '720p'],
+   409→    featured: false,
+   410→    featuredOrder: 0,
+   411→  },
+   412→  {
+   413→    id: 'mv-019',
+   414→    title: 'Glass Kingdom',
+   415→    year: 2024,
+   416→    rating: 8.3,
+   417→    duration: 0,
+   418→    genres: ['Fantasy', 'Drama'],
+   419→    synopsis:
+   420→      'In a floating city made entirely of enchanted glass, a young glassblower discovers she can see the future in her creations. When her visions reveal the city\'s imminent shattering, she must navigate court politics, forbidden magic, and a love that could either save the kingdom or ensure its destruction.',
+   421→    director: 'Guillermo del Toro',
+   422→    cast: ['Anya Taylor-Joy', 'Oscar Isaac', 'Gong Li', 'Timothée Chalamet'],
+   423→    backdropGradient:
+   424→      'linear-gradient(135deg, #0a0a1a 0%, #141430 25%, #282850 50%, #5050a0 75%, #8080ff 100%)',
+   425→    posterGradient:
+   426→      'linear-gradient(180deg, #141430 0%, #282850 40%, #5050a0 70%, #0a0a1a 100%)',
+   427→    posterImage: '/posters/mv-019.png',
+   428→    type: 'series',
+   429→    seasons: 2,
+   430→    qualities: ['4K', '1080p', '720p'],
+   431→    featured: false,
+   432→    featuredOrder: 0,
+   433→  },
+   434→  {
+   435→    id: 'mv-020',
+   436→    title: 'The Forgery',
+   437→    year: 2023,
+   438→    rating: 7.9,
+   439→    duration: 125,
+   440→    genres: ['Thriller', 'Drama'],
+   441→    synopsis:
+   442→      'The world\'s most talented art forger is forced out of retirement when a criminal syndicate kidnaps her daughter and demands she replicate a stolen masterpiece. But as she works, she realizes the painting she\'s copying contains a hidden map to a treasure that powerful people will kill to protect.',
+   443→    director: 'Ridley Scott',
+   444→    cast: ['Cate Blanchett', 'Pedro Pascal', 'Viola Davis', 'Mads Mikkelsen'],
+   445→    backdropGradient:
+   446→      'linear-gradient(135deg, #1a1410 0%, #2e2218 25%, #4a3828 50%, #8b7355 75%, #1a1410 100%)',
+   447→    posterGradient:
+   448→      'linear-gradient(180deg, #2e2218 0%, #4a3828 40%, #8b7355 70%, #1a1410 100%)',
+   449→    posterImage: '/posters/mv-020.png',
+   450→    type: 'movie',
+   451→    qualities: ['4K', '1080p', '720p'],
+   452→    featured: false,
+   453→    featuredOrder: 0,
+   454→  },
+   455→  {
+   456→    id: 'mv-021',
+   457→    title: 'Pulse',
+   458→    originalTitle: ' impuls',
+   459→    year: 2024,
+   460→    rating: 7.3,
+   461→    duration: 109,
+   462→    genres: ['Horror', 'Sci-Fi'],
+   463→    synopsis:
+   464→      'After a massive solar flare knocks out global electronics, a group of strangers trapped in a Berlin subway station discovers that some people have been permanently altered by the electromagnetic pulse—developing a hive-mind consciousness and a taste for neural tissue.',
+   465→    director: 'Fede Álvarez',
+   466→    cast: ['Anya Taylor-Joy', 'Alexander Skarsgård', 'Daniel Kaluuya', 'Nina Hoss'],
+   467→    backdropGradient:
+   468→      'linear-gradient(135deg, #0a0000 0%, #1a0505 25%, #3d0a0a 50%, #6b1a1a 75%, #0a0000 100%)',
+   469→    posterGradient:
+   470→      'linear-gradient(180deg, #1a0505 0%, #3d0a0a 40%, #6b1a1a 70%, #0a0000 100%)',
+   471→    posterImage: '/posters/mv-021.png',
+   472→    type: 'movie',
+   473→    qualities: ['1080p', '720p', '480p'],
+   474→    featured: false,
+   475→    featuredOrder: 0,
+   476→  },
+   477→  {
+   478→    id: 'mv-022',
+   479→    title: 'The Infinite Garden',
+   480→    year: 2024,
+   481→    rating: 9.2,
+   482→    duration: 195,
+   483→    genres: ['Documentary', 'Animation'],
+   484→    synopsis:
+   485→      'An immersive visual essay that uses AI-generated art and real macro photography to explore the mathematical patterns hidden in nature—from the fractal geometry of ferns to the Fibonacci spirals of galaxies. A meditation on the universe\'s deepest code, told without a single word of narration.',
+   486→    director: 'Terrence Malick',
+   487→    cast: [],
+   488→    backdropGradient:
+   489→      'linear-gradient(135deg, #001a0a 0%, #003314 25%, #00662a 50%, #00cc55 75%, #001a0a 100%)',
+   490→    posterGradient:
+   491→      'linear-gradient(180deg, #003314 0%, #00662a 40%, #00cc55 70%, #001a0a 100%)',
+   492→    posterImage: '/posters/mv-022.png',
+   493→    type: 'movie',
+   494→    qualities: ['4K', '1080p'],
+   495→    featured: false,
+   496→    featuredOrder: 0,
+   497→  },
+   498→  {
+   499→    id: 'mv-023',
+   500→    title: 'Two Tickets to Paradise',
+   501→    year: 2023,
+   502→    rating: 7.2,
+   503→    duration: 104,
+   504→    genres: ['Comedy', 'Romance'],
+   505→    synopsis:
+   506→      'After accidentally booking the same honeymoon suite in Bali, two strangers—recently dumped and utterly miserable—decide to share the trip rather than lose their money. What begins as a pragmatic arrangement becomes the most transformative week of their lives, proving that sometimes the wrong person is exactly the right detour.',
+   507→    director: 'Nia DaCosta',
+   508→    cast: ['Simu Liu', 'Florence Pugh', 'Awkwafina', 'Jonathan Majors'],
+   509→    backdropGradient:
+   510→      'linear-gradient(135deg, #1a0f28 0%, #2e1a4a 25%, #5c3d8e 50%, #e879a8 75%, #1a0f28 100%)',
+   511→    posterGradient:
+   512→      'linear-gradient(180deg, #2e1a4a 0%, #5c3d8e 40%, #e879a8 70%, #1a0f28 100%)',
+   513→    posterImage: '/posters/mv-023.png',
+   514→    type: 'movie',
+   515→    qualities: ['1080p', '720p', '480p'],
+   516→    featured: false,
+   517→    featuredOrder: 0,
+   518→  },
+   519→  {
+   520→    id: 'mv-024',
+   521→    title: 'Iron Harvest',
+   522→    year: 2024,
+   523→    rating: 8.0,
+   524→    duration: 0,
+   525→    genres: ['Action', 'Drama', 'Sci-Fi'],
+   526→    synopsis:
+   527→      'In an alternate 1920s where mechs powered by diesel and steam reshape European warfare, a shell-shocked veteran and a brilliant engineer must cross a continent scarred by mechanized conflict to deliver a weapon that could end the war—or start an even deadlier one.',
+   528→    director: 'Guillermo del Toro',
+   529→    cast: ['Tom Hardy', 'Saoirse Ronan', 'Christoph Waltz', 'Dev Patel'],
+   530→    backdropGradient:
+   531→      'linear-gradient(135deg, #1a1408 0%, #3d2e14 25%, #6b5028 50%, #a08040 75%, #1a1408 100%)',
+   532→    posterGradient:
+   533→      'linear-gradient(180deg, #3d2e14 0%, #6b5028 40%, #a08040 70%, #1a1408 100%)',
+   534→    posterImage: '/posters/mv-024.png',
+   535→    type: 'series',
+   536→    seasons: 2,
+   537→    qualities: ['4K', '1080p', '720p'],
+   538→    featured: false,
+   539→    featuredOrder: 0,
+   540→  },
+   541→  {
+   542→    id: 'mv-025',
+   543→    title: 'Solaris Drift',
+   544→    year: 2024,
+   545→    rating: 8.1,
+   546→    duration: 118,
+   547→    genres: ['Sci-Fi', 'Romance'],
+   548→    synopsis:
+   549→      'Aboard two generation ships launched centuries apart on the same interstellar course, a young navigator from the lead vessel falls in love with a scientist from the trailing ship through delayed transmissions. As their ships slowly converge over decades, they must decide whether their love can survive the gulf of relativistic time—or if meeting in person will shatter the illusion they\'ve built together.',
+   550→    director: 'Denis Villeneuve',
+   551→    cast: ['Gemma Chan', 'Paul Mescal', 'Saoirse Ronan', 'John Boyega'],
+   552→    backdropGradient:
+   553→      'linear-gradient(135deg, #0a0014 0%, #1a0a3e 25%, #3d1a6e 50%, #a855f7 75%, #0a0014 100%)',
+   554→    posterGradient:
+   555→      'linear-gradient(180deg, #1a0a3e 0%, #3d1a6e 40%, #a855f7 70%, #0a0014 100%)',
+   556→    posterImage: '/posters/mv-025.png',
+   557→    type: 'movie',
+   558→    qualities: ['4K', '1080p', '720p'],
+   559→    featured: false,
+   560→    featuredOrder: 0,
+   561→  },
+   562→  {
+   563→    id: 'mv-026',
+   564→    title: 'The Henna Diaries',
+   565→    year: 2023,
+   566→    rating: 8.4,
+   567→    duration: 142,
+   568→    genres: ['Drama', 'Romance'],
+   569→    synopsis:
+   570→      'In the winding lanes of old Jaipur, a reclusive henna artist with a gift for reading destinies in the patterns she paints discovers that the designs are beginning to predict her own future—including a love she never expected and a family secret that threatens to unravel three generations of tradition. A luminous portrait of art, identity, and the stories we carry on our skin.',
+   571→    director: 'Mira Nair',
+   572→    cast: ['Priyanka Chopra Jonas', 'Dev Patel', 'Tabu', 'Riz Ahmed'],
+   573→    backdropGradient:
+   574→      'linear-gradient(135deg, #1a0f0a 0%, #4a2c1a 25%, #8b4513 50%, #cd853f 75%, #1a0f0a 100%)',
+   575→    posterGradient:
+   576→      'linear-gradient(180deg, #4a2c1a 0%, #8b4513 40%, #cd853f 70%, #1a0f0a 100%)',
+   577→    posterImage: '/posters/mv-026.png',
+   578→    type: 'movie',
+   579→    qualities: ['4K', '1080p', '720p'],
+   580→    featured: false,
+   581→    featuredOrder: 0,
+   582→  },
+   583→  {
+   584→    id: 'mv-027',
+   585→    title: 'Chatterbox',
+   586→    year: 2024,
+   587→    rating: 7.8,
+   588→    duration: 92,
+   589→    genres: ['Comedy', 'Animation'],
+   590→    synopsis:
+   591→      'When a mysterious meteorite gives every animal on Earth the ability to speak, a cynical wildlife documentarian becomes the world\'s most unlikely translator. From philosophical pigeons to gossiping giraffes, she must navigate the chaos of a planet where every creature has an opinion—especially her sarcastic rescue cat, who turns out to be the smartest voice of all.',
+   592→    director: 'Dean DeBlois',
+   593→    cast: ['(Voice) Aubrey Plaza', '(Voice) Oscar Isaac', '(Voice) Awkwafina', '(Voice) Nick Kroll'],
+   594→    backdropGradient:
+   595→      'linear-gradient(135deg, #1a2e0a 0%, #2d5a1a 25%, #4caf50 50%, #81c784 75%, #1a2e0a 100%)',
+   596→    posterGradient:
+   597→      'linear-gradient(180deg, #2d5a1a 0%, #4caf50 40%, #81c784 70%, #1a2e0a 100%)',
+   598→    posterImage: '/posters/mv-027.png',
+   599→    type: 'movie',
+   600→    qualities: ['4K', '1080p', '720p'],
+   601→    featured: false,
+   602→    featuredOrder: 0,
+   603→  },
+   604→  {
+   605→    id: 'mv-028',
+   606→    title: 'Abyssal',
+   607→    year: 2024,
+   608→    rating: 7.6,
+   609→    duration: 0,
+   610→    genres: ['Horror', 'Sci-Fi'],
+   611→    synopsis:
+   612→      'At the bottom of the Mariana Trench, an international research colony has spent five years studying bioluminescent lifeforms—until the power grid fails, the communication buoy is severed, and something begins mimicking the voices of the dead among the crew. Trapped in crushing darkness with dwindling oxygen, the colonists realize the trench itself is alive, and it\'s hungry for minds.',
+   613→    director: 'James Cameron',
+   614→    cast: ['Rebecca Ferguson', 'Steven Yeun', 'Zhang Ziyi', 'Mads Mikkelsen'],
+   615→    backdropGradient:
+   616→      'linear-gradient(135deg, #000000 0%, #000d1a 25%, #001a33 50%, #003366 75%, #000000 100%)',
+   617→    posterGradient:
+   618→      'linear-gradient(180deg, #000d1a 0%, #001a33 40%, #003366 70%, #000000 100%)',
+   619→    posterImage: '/posters/mv-028.png',
+   620→    type: 'series',
+   621→    seasons: 2,
+   622→    qualities: ['4K', '1080p', '720p'],
+   623→    featured: false,
+   624→    featuredOrder: 0,
+   625→  },
+   626→  {
+   627→    id: 'mv-029',
+   628→    title: 'The Grand Illusion',
+   629→    year: 2023,
+   630→    rating: 8.7,
+   631→    duration: 165,
+   632→    genres: ['Thriller', 'Drama'],
+   633→    synopsis:
+   634→      'In Nazi-occupied Paris, a world-renowned magician is forced to perform for the Gestapo while secretly using his illusions to smuggle resistance fighters and forged documents across borders. When a suspicious SS officer begins deconstructing his tricks, the magician realizes his final, most dangerous performance must be absolutely real. A taut, elegant thriller where every sleight of hand is a matter of life and death.',
+   635→    director: 'Christopher Nolan',
+   636→    cast: ['Ralph Fiennes', 'Saoirse Ronan', 'Christoph Waltz', 'Léa Seydoux'],
+   637→    backdropGradient:
+   638→      'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 25%, #333333 50%, #4d4d4d 75%, #0a0a0a 100%)',
+   639→    posterGradient:
+   640→      'linear-gradient(180deg, #1a1a1a 0%, #333333 40%, #4d4d4d 70%, #0a0a0a 100%)',
+   641→    posterImage: '/posters/mv-029.png',
+   642→    type: 'movie',
+   643→    qualities: ['4K', '1080p', '720p'],
+   644→    featured: false,
+   645→    featuredOrder: 0,
+   646→  },
+   647→  {
+   648→    id: 'mv-030',
+   649→    title: 'Verdant',
+   650→    year: 2024,
+   651→    rating: 8.0,
+   652→    duration: 110,
+   653→    genres: ['Documentary', 'Fantasy'],
+   654→    synopsis:
+   655→      'Part ecological odyssey, part mythic fable, this visually spellbinding film follows an indigenous botanist as she traces the real-world origins of legendary forests—from the cedar groves of the Pacific Northwest that inspired ancient totem myths, to the ancient baobabs of Madagascar said to house spirits. Blending cutting-edge science with the folklore of cultures who never separated nature from the supernatural.',
+   656→    director: 'Werner Herzog',
+   657→    cast: ['Dr. Robin Wall Kimmerer', 'Dr. Wangari Maathai Jr.', 'Nālani Wilson'],
+   658→    backdropGradient:
+   659→      'linear-gradient(135deg, #001a0a 0%, #003314 25%, #006628 50%, #228B22 75%, #001a0a 100%)',
+   660→    posterGradient:
+   661→      'linear-gradient(180deg, #003314 0%, #006628 40%, #228B22 70%, #001a0a 100%)',
+   662→    posterImage: '/posters/mv-030.png',
+   663→    type: 'movie',
+   664→    qualities: ['4K', '1080p', '720p'],
+   665→    featured: false,
+   666→    featuredOrder: 0,
+   667→  },
+   668→];
+   669→
+   670→export const genres = [
+   671→  'Action',
+   672→  'Sci-Fi',
+   673→  'Drama',
+   674→  'Thriller',
+   675→  'Horror',
+   676→  'Comedy',
+   677→  'Romance',
+   678→  'Animation',
+   679→  'Documentary',
+   680→  'Fantasy',
+   681→];
+   682→
+   683→export const categories: Record<string, Movie[]> = genres.reduce(
+   684→  (acc, genre) => {
+   685→    acc[genre] = movies.filter((m) => m.genres.includes(genre));
+   686→    return acc;
+   687→  },
+   688→  {} as Record<string, Movie[]>,
+   689→);
+   690→
+   691→export const featuredMovies = movies
+   692→  .filter((m) => m.featured)
+   693→  .sort((a, b) => a.featuredOrder - b.featuredOrder);
+   694→
+   695→export const seriesList = movies.filter((m) => m.type === 'series');
+   696→

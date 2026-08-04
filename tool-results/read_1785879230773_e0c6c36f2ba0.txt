@@ -1,0 +1,2002 @@
+     1→'use client';
+     2→
+     3→import React, { useState, useEffect, useCallback, useRef } from 'react';
+     4→import { motion, AnimatePresence } from 'framer-motion';
+     5→import {
+     6→  ArrowLeft, User, Palette, Play, Bell, Shield, Download, Accessibility,
+     7→  Globe, BarChart3, Info, Users, Database, Monitor, Eye, Lock,
+     8→  Megaphone, HardDrive, Key, Server, Archive, Save, Check, X, Plus,
+     9→  Trash2, Edit3, Star, Search, Filter, MoreVertical, Upload,
+    10→  RefreshCw, AlertTriangle, ExternalLink, Bug, ChevronDown,
+    11→  Volume2, Subtitles, Clock, Wifi, WifiOff, FileText, Brush,
+    12→  Sparkles, Moon, Sun, MonitorSpeaker, Gauge, Zap, Cpu, MemoryStick,
+    13→  Timer, Activity, ShieldCheck, ShieldAlert, BadgeCheck, Fingerprint,
+    14→  Globe2, Languages, Calendar, Thermometer, Video, Tv, Film,
+    15→  FolderOpen, Settings, ClipboardList, Trash, DownloadCloud,
+    16→  CheckCircle2, XCircle, AlertCircle, CheckCheck, Loader2, EyeOff
+    17→} from 'lucide-react';
+    18→import { Switch } from '@/components/ui/switch';
+    19→import { Slider } from '@/components/ui/slider';
+    20→import { Input } from '@/components/ui/input';
+    21→import { Textarea } from '@/components/ui/textarea';
+    22→import { Button } from '@/components/ui/button';
+    23→import { Label } from '@/components/ui/label';
+    24→import { Separator } from '@/components/ui/separator';
+    25→import { Badge } from '@/components/ui/badge';
+    26→import { ScrollArea } from '@/components/ui/scroll-area';
+    27→import { Progress } from '@/components/ui/progress';
+    28→import { Checkbox } from '@/components/ui/checkbox';
+    29→import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+    30→import {
+    31→  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+    32→  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+    33→} from '@/components/ui/alert-dialog';
+    34→import {
+    35→  Dialog, DialogContent, DialogDescription, DialogHeader,
+    36→  DialogTitle, DialogTrigger, DialogFooter,
+    37→} from '@/components/ui/dialog';
+    38→import { useAppStore } from '@/lib/stores/app-store';
+    39→import { useAuthStore } from '@/lib/stores/auth-store';
+    40→import { useThemeStore, accentColors } from '@/lib/stores/theme-store';
+    41→import { toast } from 'sonner';
+    42→
+    43→/* ================================================================
+    44→   TYPES
+    45→   ================================================================ */
+    46→interface UserSettingsData {
+    47→  // Profile
+    48→  displayName: string;
+    49→  bio: string;
+    50→  avatar: string;
+    51→  // Appearance
+    52→  accentColor: string;
+    53→  themeMode: string;
+    54→  blurIntensity: number;
+    55→  noiseLevel: number;
+    56→  layoutDensity: string;
+    57→  reduceMotion: boolean;
+    58→  showAurora: boolean;
+    59→  showSparkles: boolean;
+    60→  cardStyle: string;
+    61→  borderRadius: number;
+    62→  fontSize: string;
+    63→  animationSpeed: string;
+    64→  // Playback
+    65→  defaultVideoQuality: string;
+    66→  autoPlayNext: boolean;
+    67→  autoPlayTrailers: boolean;
+    68→  skipIntro: boolean;
+    69→  skipRecap: boolean;
+    70→  defaultVolume: number;
+    71→  enableSubtitles: boolean;
+    72→  subtitleLanguage: string;
+    73→  subtitleFontSize: string;
+    74→  subtitleColor: string;
+    75→  audioLanguage: string;
+    76→  playbackSpeed: string;
+    77→  hardwareAcceleration: boolean;
+    78→  streamingBuffer: string;
+    79→  maximumBitrate: string;
+    80→  // Notifications
+    81→  pushNotifications: boolean;
+    82→  newReleaseAlerts: boolean;
+    83→  watchlistAlerts: boolean;
+    84→  recommendationAlerts: boolean;
+    85→  systemAlerts: boolean;
+    86→  quietHoursEnabled: boolean;
+    87→  quietHoursStart: string;
+    88→  quietHoursEnd: string;
+    89→  notificationSound: string;
+    90→  notificationBadge: boolean;
+    91→  // Privacy
+    92→  profileVisibility: string;
+    93→  showWatchHistory: boolean;
+    94→  showWatchlist: boolean;
+    95→  showOnlineStatus: boolean;
+    96→  dataCollection: boolean;
+    97→  twoFactorAuth: boolean;
+    98→  loginNotifications: boolean;
+    99→  // Downloads
+   100→  downloadQuality: string;
+   101→  downloadPath: string;
+   102→  autoDeleteWatched: boolean;
+   103→  wifiOnlyDownloads: boolean;
+   104→  maxConcurrentDownloads: number;
+   105→  maxDownloadStorage: number;
+   106→  downloadNotification: boolean;
+   107→  autoDownloadEpisodes: boolean;
+   108→  // Accessibility
+   109→  highContrast: boolean;
+   110→  largeText: boolean;
+   111→  screenReader: boolean;
+   112→  closedCaptions: boolean;
+   113→  audioDescriptions: boolean;
+   114→  colorBlindness: string;
+   115→  focusIndicators: boolean;
+   116→  keyboardNavigation: boolean;
+   117→  // Language
+   118→  interfaceLanguage: string;
+   119→  contentRegion: string;
+   120→  dateFormat: string;
+   121→  timeFormat: string;
+   122→  temperatureUnit: string;
+   123→  // Password
+   124→  currentPassword: string;
+   125→  newPassword: string;
+   126→  confirmPassword: string;
+   127→}
+   128→
+   129→interface AdminSettingsData {
+   130→  // Platform
+   131→  siteName: string;
+   132→  siteDescription: string;
+   133→  logoUrl: string;
+   134→  faviconUrl: string;
+   135→  contactEmail: string;
+   136→  supportUrl: string;
+   137→  socialFacebook: string;
+   138→  socialTwitter: string;
+   139→  socialInstagram: string;
+   140→  socialYouTube: string;
+   141→  socialDiscord: string;
+   142→  maintenanceMode: boolean;
+   143→  maintenanceMessage: string;
+   144→  // Appearance
+   145→  globalAccentColor: string;
+   146→  defaultTheme: string;
+   147→  allowCustomThemes: boolean;
+   148→  defaultBlur: number;
+   149→  defaultNoise: number;
+   150→  defaultDensity: string;
+   151→  customCss: string;
+   152→  customJs: string;
+   153→  brandColorPrimary: string;
+   154→  brandColorSecondary: string;
+   155→  brandGradientStart: string;
+   156→  brandGradientEnd: string;
+   157→  loadingText: string;
+   158→  loadingAnimation: string;
+   159→  // Notifications
+   160→  globalPushEnabled: boolean;
+   161→  globalEmailEnabled: boolean;
+   162→  maxNotifsPerUser: number;
+   163→  notifRetentionDays: number;
+   164→  autoClearRead: boolean;
+   165→  systemTemplate: string;
+   166→  welcomeTemplate: string;
+   167→  updateTemplate: string;
+   168→  maintenanceTemplate: string;
+   169→  customBroadcast: string;
+   170→  // Security
+   171→  maxLoginAttempts: number;
+   172→  lockoutDuration: number;
+   173→  passwordMinLength: number;
+   174→  passwordRequireUpper: boolean;
+   175→  passwordRequireNumbers: boolean;
+   176→  passwordRequireSpecial: boolean;
+   177→  sessionTimeout: number;
+   178→  maxSessionsPerUser: number;
+   179→  ipWhitelist: string;
+   180→  ipBlacklist: string;
+   181→  rateLimiting: boolean;
+   182→  rateLimitRpm: number;
+   183→  enableAuditLog: boolean;
+   184→  twoFactorRequired: boolean;
+   185→  admin2faRequired: boolean;
+   186→  // Analytics
+   187→  analyticsEnabled: boolean;
+   188→  trackPageViews: boolean;
+   189→  trackSearchQueries: boolean;
+   190→  trackWatchEvents: boolean;
+   191→  trackDownloads: boolean;
+   192→  dataRetentionDays: number;
+   193→  anonymizeIp: boolean;
+   194→  shareAnalyticsWithUsers: boolean;
+   195→  // Storage
+   196→  maxStoragePerUser: number;
+   197→  totalStorageLimit: number;
+   198→  autoCleanupOldHistory: boolean;
+   199→  cleanupAfterDays: number;
+   200→  maxPosterCacheSize: number;
+   201→  maxDownloadStorage: number;
+   202→  // API
+   203→  apiMovieBoxUrl: string;
+   204→  apiTimeout: number;
+   205→  apiRetryCount: number;
+   206→  enableCaching: boolean;
+   207→  cacheTtl: number;
+   208→  proxyUrl: string;
+   209→  enableRateLimit: boolean;
+   210→  apiRateLimit: number;
+   211→  apiKey: string;
+   212→  // Backup
+   213→  autoBackup: boolean;
+   214→  backupFrequency: string;
+   215→  backupRetentionCount: number;
+   216→  backupStoragePath: string;
+   217→  backupCompression: boolean;
+   218→  backupEncryption: boolean;
+   219→}
+   220→
+   221→interface AdminUserData {
+   222→  id: string;
+   223→  name: string;
+   224→  email?: string;
+   225→  avatar: string;
+   226→  bio: string;
+   227→  isAdmin: boolean;
+   228→  isKid: boolean;
+   229→  accentColor: string;
+   230→  isActive: boolean;
+   231→  createdAt: string;
+   232→  updatedAt: string;
+   233→}
+   234→
+   235→/* ================================================================
+   236→   DEFAULTS
+   237→   ================================================================ */
+   238→const defaultUserSettings: UserSettingsData = {
+   239→  displayName: '', bio: '', avatar: '',
+   240→  accentColor: 'purple', themeMode: 'oled', blurIntensity: 24, noiseLevel: 3,
+   241→  layoutDensity: 'comfortable', reduceMotion: false, showAurora: true,
+   242→  showSparkles: true, cardStyle: 'glass', borderRadius: 12, fontSize: 'medium',
+   243→  animationSpeed: 'normal',
+   244→  defaultVideoQuality: '1080p', autoPlayNext: true, autoPlayTrailers: false,
+   245→  skipIntro: true, skipRecap: true, defaultVolume: 0.8, enableSubtitles: false,
+   246→  subtitleLanguage: 'en', subtitleFontSize: 'medium', subtitleColor: 'white',
+   247→  audioLanguage: 'en', playbackSpeed: '1x', hardwareAcceleration: true,
+   248→  streamingBuffer: '30', maximumBitrate: 'auto',
+   249→  pushNotifications: true, newReleaseAlerts: true, watchlistAlerts: false,
+   250→  recommendationAlerts: true, systemAlerts: true, quietHoursEnabled: false,
+   251→  quietHoursStart: '22:00', quietHoursEnd: '07:00', notificationSound: 'default',
+   252→  notificationBadge: true,
+   253→  profileVisibility: 'private', showWatchHistory: true, showWatchlist: true,
+   254→  showOnlineStatus: true, dataCollection: false, twoFactorAuth: false,
+   255→  loginNotifications: true,
+   256→  downloadQuality: '1080p', downloadPath: '', autoDeleteWatched: false,
+   257→  wifiOnlyDownloads: true, maxConcurrentDownloads: 2, maxDownloadStorage: 10,
+   258→  downloadNotification: true, autoDownloadEpisodes: false,
+   259→  highContrast: false, largeText: false, screenReader: false,
+   260→  closedCaptions: false, audioDescriptions: false, colorBlindness: 'none',
+   261→  focusIndicators: true, keyboardNavigation: true,
+   262→  interfaceLanguage: 'en', contentRegion: 'us', dateFormat: 'MM/DD/YYYY',
+   263→  timeFormat: '12h', temperatureUnit: 'fahrenheit',
+   264→  currentPassword: '', newPassword: '', confirmPassword: '',
+   265→};
+   266→
+   267→const defaultAdminSettings: AdminSettingsData = {
+   268→  siteName: 'GemiFlix', siteDescription: 'Your premium media center',
+   269→  logoUrl: '', faviconUrl: '', contactEmail: '', supportUrl: '',
+   270→  socialFacebook: '', socialTwitter: '', socialInstagram: '',
+   271→  socialYouTube: '', socialDiscord: '', maintenanceMode: false,
+   272→  maintenanceMessage: 'We are currently performing maintenance.',
+   273→  globalAccentColor: 'purple', defaultTheme: 'oled', allowCustomThemes: true,
+   274→  defaultBlur: 24, defaultNoise: 3, defaultDensity: 'comfortable',
+   275→  customCss: '', customJs: '', brandColorPrimary: '#a855f7',
+   276→  brandColorSecondary: '#06b6d4', brandGradientStart: '#a855f7',
+   277→  brandGradientEnd: '#06b6d4', loadingText: 'Loading GemiFlix...',
+   278→  loadingAnimation: 'pulse',
+   279→  globalPushEnabled: true, globalEmailEnabled: true, maxNotifsPerUser: 100,
+   280→  notifRetentionDays: 30, autoClearRead: false, systemTemplate: '',
+   281→  welcomeTemplate: '', updateTemplate: '', maintenanceTemplate: '',
+   282→  customBroadcast: '',
+   283→  maxLoginAttempts: 5, lockoutDuration: 30, passwordMinLength: 8,
+   284→  passwordRequireUpper: true, passwordRequireNumbers: true,
+   285→  passwordRequireSpecial: false, sessionTimeout: 60, maxSessionsPerUser: 3,
+   286→  ipWhitelist: '', ipBlacklist: '', rateLimiting: true, rateLimitRpm: 60,
+   287→  enableAuditLog: true, twoFactorRequired: false, admin2faRequired: true,
+   288→  analyticsEnabled: true, trackPageViews: true, trackSearchQueries: true,
+   289→  trackWatchEvents: true, trackDownloads: true, dataRetentionDays: 90,
+   290→  anonymizeIp: true, shareAnalyticsWithUsers: false,
+   291→  maxStoragePerUser: 50, totalStorageLimit: 500, autoCleanupOldHistory: true,
+   292→  cleanupAfterDays: 365, maxPosterCacheSize: 5, maxDownloadStorage: 100,
+   293→  apiMovieBoxUrl: '', apiTimeout: 30, apiRetryCount: 3, enableCaching: true,
+   294→  cacheTtl: 3600, proxyUrl: '', enableRateLimit: true, apiRateLimit: 100,
+   295→  apiKey: '',
+   296→  autoBackup: true, backupFrequency: 'weekly', backupRetentionCount: 7,
+   297→  backupStoragePath: './backups', backupCompression: true, backupEncryption: false,
+   298→};
+   299→
+   300→/* ================================================================
+   301→   COLOR SWATCHES
+   302→   ================================================================ */
+   303→const colorSwatches = [
+   304→  { color: 'purple', hex: '#a855f7', name: 'Purple' },
+   305→  { color: 'cyan', hex: '#06b6d4', name: 'Cyan' },
+   306→  { color: 'orange', hex: '#f97316', name: 'Orange' },
+   307→  { color: 'pink', hex: '#ec4899', name: 'Pink' },
+   308→  { color: 'green', hex: '#22c55e', name: 'Green' },
+   309→  { color: 'red', hex: '#ef4444', name: 'Red' },
+   310→  { color: 'yellow', hex: '#eab308', name: 'Yellow' },
+   311→  { color: 'blue', hex: '#3b82f6', name: 'Blue' },
+   312→  { color: 'emerald', hex: '#10b981', name: 'Emerald' },
+   313→  { color: 'rose', hex: '#f43f5e', name: 'Rose' },
+   314→  { color: 'violet', hex: '#8b5cf6', name: 'Violet' },
+   315→  { color: 'amber', hex: '#f59e0b', name: 'Amber' },
+   316→  { color: 'teal', hex: '#14b8a6', name: 'Teal' },
+   317→  { color: 'indigo', hex: '#6366f1', name: 'Indigo' },
+   318→  { color: 'lime', hex: '#84cc16', name: 'Lime' },
+   319→  { color: 'sky', hex: '#0ea5e9', name: 'Sky' },
+   320→];
+   321→
+   322→/* ================================================================
+   323→   TAB DEFINITIONS
+   324→   ================================================================ */
+   325→type SettingsTab = 'profile' | 'appearance' | 'playback' | 'notifications' | 'privacy' | 'downloads' | 'accessibility' | 'language' | 'stats' | 'about' |
+   326→  'admin-users' | 'admin-content' | 'admin-platform' | 'admin-appearance' | 'admin-notifications' | 'admin-security' | 'admin-analytics' | 'admin-storage' | 'admin-api' | 'admin-system' | 'admin-backup';
+   327→
+   328→interface TabDef {
+   329→  id: SettingsTab;
+   330→  label: string;
+   331→  icon: React.ReactNode;
+   332→  admin?: boolean;
+   333→}
+   334→
+   335→const userTabs: TabDef[] = [
+   336→  { id: 'profile', label: 'Profile', icon: <User className="w-4 h-4" /> },
+   337→  { id: 'appearance', label: 'Appearance', icon: <Palette className="w-4 h-4" /> },
+   338→  { id: 'playback', label: 'Playback', icon: <Play className="w-4 h-4" /> },
+   339→  { id: 'notifications', label: 'Notifications', icon: <Bell className="w-4 h-4" /> },
+   340→  { id: 'privacy', label: 'Privacy', icon: <Shield className="w-4 h-4" /> },
+   341→  { id: 'downloads', label: 'Downloads', icon: <Download className="w-4 h-4" /> },
+   342→  { id: 'accessibility', label: 'Accessibility', icon: <Accessibility className="w-4 h-4" /> },
+   343→  { id: 'language', label: 'Language', icon: <Globe className="w-4 h-4" /> },
+   344→  { id: 'stats', label: 'Stats', icon: <BarChart3 className="w-4 h-4" /> },
+   345→  { id: 'about', label: 'About', icon: <Info className="w-4 h-4" /> },
+   346→];
+   347→
+   348→const adminTabs: TabDef[] = [
+   349→  { id: 'admin-users', label: 'Users', icon: <Users className="w-4 h-4" />, admin: true },
+   350→  { id: 'admin-content', label: 'Content', icon: <Film className="w-4 h-4" />, admin: true },
+   351→  { id: 'admin-platform', label: 'Platform', icon: <Monitor className="w-4 h-4" />, admin: true },
+   352→  { id: 'admin-appearance', label: 'Appearance', icon: <Brush className="w-4 h-4" />, admin: true },
+   353→  { id: 'admin-notifications', label: 'Notifications', icon: <Megaphone className="w-4 h-4" />, admin: true },
+   354→  { id: 'admin-security', label: 'Security', icon: <Lock className="w-4 h-4" />, admin: true },
+   355→  { id: 'admin-analytics', label: 'Analytics', icon: <Activity className="w-4 h-4" />, admin: true },
+   356→  { id: 'admin-storage', label: 'Storage', icon: <HardDrive className="w-4 h-4" />, admin: true },
+   357→  { id: 'admin-api', label: 'API', icon: <Key className="w-4 h-4" />, admin: true },
+   358→  { id: 'admin-system', label: 'System', icon: <Server className="w-4 h-4" />, admin: true },
+   359→  { id: 'admin-backup', label: 'Backup', icon: <Archive className="w-4 h-4" />, admin: true },
+   360→];
+   361→
+   362→/* ================================================================
+   363→   SHARED SETTING ROW COMPONENT
+   364→   ================================================================ */
+   365→function SettingRow({ label, description, children }: { label: string; description?: string; children: React.ReactNode }) {
+   366→  return (
+   367→    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-3">
+   368→      <div className="flex-1 min-w-0">
+   369→        <Label className="text-sm font-medium text-[var(--foreground)]">{label}</Label>
+   370→        {description && <p className="text-xs text-[var(--muted-foreground)] mt-0.5">{description}</p>}
+   371→      </div>
+   372→      <div className="shrink-0">{children}</div>
+   373→    </div>
+   374→  );
+   375→}
+   376→
+   377→function SectionHeader({ title, icon }: { title: string; icon?: React.ReactNode }) {
+   378→  return (
+   379→    <div className="flex items-center gap-2 mb-4 mt-6 first:mt-0">
+   380→      {icon && <span className="text-[var(--accent-current)]">{icon}</span>}
+   381→      <h3 className="text-sm font-semibold text-[var(--foreground)] uppercase tracking-wider">{title}</h3>
+   382→      <div className="flex-1 h-px bg-white/5" />
+   383→    </div>
+   384→  );
+   385→}
+   386→
+   387→function SettingCard({ children }: { children: React.ReactNode }) {
+   388→  return (
+   389→    <div className="glass-panel p-4 md:p-5">
+   390→      <div className="space-y-1">
+   391→        {children}
+   392→      </div>
+   393→    </div>
+   394→  );
+   395→}
+   396→
+   397→/* Glassmorphic select */
+   398→function GlassSelect({ value, onValueChange, options, className = '' }: {
+   399→  value: string; onValueChange: (v: string) => void;
+   400→  options: { value: string; label: string }[];
+   401→  className?: string;
+   402→}) {
+   403→  return (
+   404→    <select
+   405→      value={value}
+   406→      onChange={(e) => onValueChange(e.target.value)}
+   407→      className={`bg-black/80 backdrop-blur-xl border border-[var(--glass-border)] rounded-lg px-3 py-1.5 text-sm text-[var(--foreground)] outline-none transition-colors focus:border-[var(--accent-current)]/50 ${className}`}
+   408→    >
+   409→      {options.map((opt) => (
+   410→        <option key={opt.value} value={opt.value}>{opt.label}</option>
+   411→      ))}
+   412→    </select>
+   413→  );
+   414→}
+   415→
+   416→/* Glassmorphic input */
+   417→function GlassInput({ value, onChange, type = 'text', placeholder = '', className = '' }: {
+   418→  value: string; onChange: (v: string) => void; type?: string; placeholder?: string; className?: string;
+   419→}) {
+   420→  return (
+   421→    <Input
+   422→      type={type}
+   423→      value={value}
+   424→      onChange={(e) => onChange(e.target.value)}
+   425→      placeholder={placeholder}
+   426→      className={`glass-input bg-black/80 backdrop-blur-xl border-[var(--glass-border)] text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] ${className}`}
+   427→    />
+   428→  );
+   429→}
+   430→
+   431→/* Glassmorphic textarea */
+   432→function GlassTextarea({ value, onChange, placeholder = '', rows = 3 }: {
+   433→  value: string; onChange: (v: string) => void; placeholder?: string; rows?: number;
+   434→}) {
+   435→  return (
+   436→    <Textarea
+   437→      value={value}
+   438→      onChange={(e) => onChange(e.target.value)}
+   439→      placeholder={placeholder}
+   440→      rows={rows}
+   441→      className="glass-input bg-black/80 backdrop-blur-xl border-[var(--glass-border)] text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] resize-none"
+   442→    />
+   443→  );
+   444→}
+   445→
+   446→/* Save animation button */
+   447→function SaveButton({ onClick, saving, saved }: { onClick: () => void; saving: boolean; saved: boolean }) {
+   448→  return (
+   449→    <Button
+   450→      onClick={onClick}
+   451→      disabled={saving}
+   452→      className="glow-accent bg-[var(--accent-current)] hover:brightness-110 text-white font-semibold transition-all"
+   453→    >
+   454→      {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : saved ? <Check className="w-4 h-4 mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+   455→      {saving ? 'Saving...' : saved ? 'Saved!' : 'Save Settings'}
+   456→    </Button>
+   457→  );
+   458→}
+   459→
+   460→/* ================================================================
+   461→   PROFILE TAB
+   462→   ================================================================ */
+   463→function ProfileTab({ settings, setSettings, onSave }: {
+   464→  settings: UserSettingsData; setSettings: React.Dispatch<React.SetStateAction<UserSettingsData>>; onSave: () => void;
+   465→}) {
+   466→  const user = useAuthStore((s) => s.user);
+   467→  const fileInputRef = useRef<HTMLInputElement>(null);
+   468→  const [passwordError, setPasswordError] = useState('');
+   469→
+   470→  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+   471→    const file = e.target.files?.[0];
+   472→    if (!file) return;
+   473→    const reader = new FileReader();
+   474→    reader.onloadend = () => {
+   475→      setSettings((prev) => ({ ...prev, avatar: reader.result as string }));
+   476→    };
+   477→    reader.readAsDataURL(file);
+   478→  };
+   479→
+   480→  const handleChangePassword = () => {
+   481→    if (!settings.currentPassword) {
+   482→      setPasswordError('Current password is required');
+   483→      return;
+   484→    }
+   485→    if (settings.newPassword.length < 8) {
+   486→      setPasswordError('Password must be at least 8 characters');
+   487→      return;
+   488→    }
+   489→    if (settings.newPassword !== settings.confirmPassword) {
+   490→      setPasswordError('Passwords do not match');
+   491→      return;
+   492→    }
+   493→    setPasswordError('');
+   494→    toast.success('Password changed successfully');
+   495→    setSettings((prev) => ({ ...prev, currentPassword: '', newPassword: '', confirmPassword: '' }));
+   496→  };
+   497→
+   498→  return (
+   499→    <div className="space-y-4">
+   500→      <SettingCard>
+   501→        <SectionHeader title="Profile Information" icon={<User className="w-4 h-4" />} />
+   502→
+   503→        {/* Display Name */}
+   504→        <SettingRow label="Display Name" description="Your public display name">
+   505→          <GlassInput
+   506→            value={settings.displayName || user?.name || ''}
+   507→            onChange={(v) => setSettings((p) => ({ ...p, displayName: v }))}
+   508→            placeholder="Enter your name"
+   509→            className="w-full sm:w-64"
+   510→          />
+   511→        </SettingRow>
+   512→        <Separator className="bg-white/5" />
+   513→
+   514→        {/* Bio */}
+   515→        <SettingRow label="Bio / About" description="A short description about yourself">
+   516→          <GlassTextarea
+   517→            value={settings.bio}
+   518→            onChange={(v) => setSettings((p) => ({ ...p, bio: v }))}
+   519→            placeholder="Tell us about yourself..."
+   520→            rows={2}
+   521→          />
+   522→        </SettingRow>
+   523→        <Separator className="bg-white/5" />
+   524→
+   525→        {/* Profile Image */}
+   526→        <SettingRow label="Profile Image" description="Upload a profile picture (stored locally)">
+   527→          <div className="flex items-center gap-3">
+   528→            <div className="relative">
+   529→              <Avatar className="h-16 w-16 border-2 border-[var(--glass-border)]">
+   530→                <AvatarImage src={settings.avatar || user?.avatar} />
+   531→                <AvatarFallback className="bg-[var(--accent-current)]/20 text-[var(--accent-current)] font-bold">
+   532→                  {(settings.displayName || user?.name || 'U').slice(0, 2).toUpperCase()}
+   533→                </AvatarFallback>
+   534→              </Avatar>
+   535→              <button
+   536→                onClick={() => fileInputRef.current?.click()}
+   537→                className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-[var(--accent-current)] flex items-center justify-center text-white shadow-lg"
+   538→              >
+   539→                <Upload className="w-3 h-3" />
+   540→              </button>
+   541→            </div>
+   542→            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+   543→            {settings.avatar && (
+   544→              <button
+   545→                onClick={() => setSettings((p) => ({ ...p, avatar: '' }))}
+   546→                className="text-xs text-[var(--muted-foreground)] hover:text-red-400 transition-colors"
+   547→              >
+   548→                Remove
+   549→              </button>
+   550→            )}
+   551→          </div>
+   552→        </SettingRow>
+   553→      </SettingCard>
+   554→
+   555→      <SettingCard>
+   556→        <SectionHeader title="Account Info" icon={<Shield className="w-4 h-4" />} />
+   557→
+   558→        {/* Account Created */}
+   559→        <SettingRow label="Account Created">
+   560→          <span className="text-sm text-[var(--muted-foreground)]">
+   561→            {user ? new Date().toLocaleDateString() : 'N/A'}
+   562→          </span>
+   563→        </SettingRow>
+   564→        <Separator className="bg-white/5" />
+   565→
+   566→        {/* Last Updated */}
+   567→        <SettingRow label="Last Updated">
+   568→          <span className="text-sm text-[var(--muted-foreground)]">{new Date().toLocaleDateString()}</span>
+   569→        </SettingRow>
+   570→      </SettingCard>
+   571→
+   572→      <SettingCard>
+   573→        <SectionHeader title="Change Password" icon={<Key className="w-4 h-4" />} />
+   574→
+   575→        <div className="space-y-3">
+   576→          <div>
+   577→            <Label className="text-xs text-[var(--muted-foreground)]">Current Password</Label>
+   578→            <GlassInput
+   579→              type="password"
+   580→              value={settings.currentPassword}
+   581→              onChange={(v) => setSettings((p) => ({ ...p, currentPassword: v }))}
+   582→              placeholder="Enter current password"
+   583→              className="w-full sm:w-64"
+   584→            />
+   585→          </div>
+   586→          <div>
+   587→            <Label className="text-xs text-[var(--muted-foreground)]">New Password</Label>
+   588→            <GlassInput
+   589→              type="password"
+   590→              value={settings.newPassword}
+   591→              onChange={(v) => setSettings((p) => ({ ...p, newPassword: v }))}
+   592→              placeholder="Enter new password"
+   593→              className="w-full sm:w-64"
+   594→            />
+   595→          </div>
+   596→          <div>
+   597→            <Label className="text-xs text-[var(--muted-foreground)]">Confirm Password</Label>
+   598→            <GlassInput
+   599→              type="password"
+   600→              value={settings.confirmPassword}
+   601→              onChange={(v) => setSettings((p) => ({ ...p, confirmPassword: v }))}
+   602→              placeholder="Confirm new password"
+   603→              className="w-full sm:w-64"
+   604→            />
+   605→          </div>
+   606→          {passwordError && <p className="text-xs text-red-400">{passwordError}</p>}
+   607→          <Button onClick={handleChangePassword} size="sm" variant="outline" className="border-[var(--glass-border)] text-[var(--foreground)]">
+   608→            Change Password
+   609→          </Button>
+   610→        </div>
+   611→      </SettingCard>
+   612→
+   613→      <div className="flex justify-end">
+   614→        <SaveButton onClick={onSave} saving={false} saved={false} />
+   615→      </div>
+   616→    </div>
+   617→  );
+   618→}
+   619→
+   620→/* ================================================================
+   621→   APPEARANCE TAB
+   622→   ================================================================ */
+   623→function AppearanceTab({ settings, setSettings, onSave }: {
+   624→  settings: UserSettingsData; setSettings: React.Dispatch<React.SetStateAction<UserSettingsData>>; onSave: () => void;
+   625→}) {
+   626→  const themeBlur = useThemeStore((s) => s.blur);
+   627→  const themeNoise = useThemeStore((s) => s.noise);
+   628→  const setThemeBlur = useThemeStore((s) => s.setBlur);
+   629→  const setThemeNoise = useThemeStore((s) => s.setNoise);
+   630→
+   631→  return (
+   632→    <div className="space-y-4">
+   633→      <SettingCard>
+   634→        <SectionHeader title="Theme & Colors" icon={<Palette className="w-4 h-4" />} />
+   635→
+   636→        {/* Accent Color */}
+   637→        <div className="py-3">
+   638→          <Label className="text-sm font-medium text-[var(--foreground)]">Accent Color</Label>
+   639→          <p className="text-xs text-[var(--muted-foreground)] mb-3">Choose your interface accent color</p>
+   640→          <div className="flex flex-wrap gap-2">
+   641→            {colorSwatches.map((swatch) => (
+   642→              <button
+   643→                key={swatch.color}
+   644→                onClick={() => setSettings((p) => ({ ...p, accentColor: swatch.color }))}
+   645→                className="group flex flex-col items-center gap-1"
+   646→              >
+   647→                <div
+   648→                  className={`relative h-8 w-8 rounded-full transition-all duration-200 ${settings.accentColor === swatch.color ? 'ring-2 ring-offset-2 ring-offset-[#050505]' : 'hover:scale-110'}`}
+   649→                  style={{ backgroundColor: swatch.hex, ringColor: settings.accentColor === swatch.color ? swatch.hex : undefined }}
+   650→                >
+   651→                  {settings.accentColor === swatch.color && (
+   652→                    <Check className="absolute inset-0 m-auto h-4 w-4 text-white drop-shadow-md" />
+   653→                  )}
+   654→                </div>
+   655→                <span className="text-[10px] text-[var(--muted-foreground)] group-hover:text-[var(--foreground)] transition-colors">
+   656→                  {swatch.name}
+   657→                </span>
+   658→              </button>
+   659→            ))}
+   660→          </div>
+   661→        </div>
+   662→        <Separator className="bg-white/5" />
+   663→
+   664→        {/* Theme Mode */}
+   665→        <SettingRow label="Theme Mode" description="Choose your preferred theme">
+   666→          <GlassSelect
+   667→            value={settings.themeMode}
+   668→            onValueChange={(v) => setSettings((p) => ({ ...p, themeMode: v }))}
+   669→            options={[
+   670→              { value: 'dark', label: 'Dark' },
+   671→              { value: 'oled', label: 'OLED Black' },
+   672→              { value: 'dim', label: 'Dim' },
+   673→            ]}
+   674→          />
+   675→        </SettingRow>
+   676→        <Separator className="bg-white/5" />
+   677→
+   678→        {/* Card Style */}
+   679→        <SettingRow label="Card Style" description="How content cards are displayed">
+   680→          <GlassSelect
+   681→            value={settings.cardStyle}
+   682→            onValueChange={(v) => setSettings((p) => ({ ...p, cardStyle: v }))}
+   683→            options={[
+   684→              { value: 'glass', label: 'Glass' },
+   685→              { value: 'solid', label: 'Solid' },
+   686→              { value: 'minimal', label: 'Minimal' },
+   687→            ]}
+   688→          />
+   689→        </SettingRow>
+   690→      </SettingCard>
+   691→
+   692→      <SettingCard>
+   693→        <SectionHeader title="Visual Effects" icon={<Sparkles className="w-4 h-4" />} />
+   694→
+   695→        {/* Blur Intensity */}
+   696→        <SettingRow label="Blur Intensity" description={`Current: ${themeBlur}px`}>
+   697→          <div className="w-full sm:w-64">
+   698→            <Slider
+   699→              value={[settings.blurIntensity]}
+   700→              min={0} max={40} step={1}
+   701→              onValueChange={(v) => { setSettings((p) => ({ ...p, blurIntensity: v[0] })); setThemeBlur(v[0]); }}
+   702→            />
+   703→            <div className="flex justify-between text-[10px] text-[var(--muted-foreground)] mt-1">
+   704→              <span>0</span><span>40</span>
+   705→            </div>
+   706→          </div>
+   707→        </SettingRow>
+   708→        <Separator className="bg-white/5" />
+   709→
+   710→        {/* Noise Texture */}
+   711→        <SettingRow label="Noise Texture Level" description={`Current: ${themeNoise}`}>
+   712→          <div className="w-full sm:w-64">
+   713→            <Slider
+   714→              value={[settings.noiseLevel]}
+   715→              min={0} max={10} step={1}
+   716→              onValueChange={(v) => { setSettings((p) => ({ ...p, noiseLevel: v[0] })); setThemeNoise(v[0]); }}
+   717→            />
+   718→            <div className="flex justify-between text-[10px] text-[var(--muted-foreground)] mt-1">
+   719→              <span>0</span><span>10</span>
+   720→            </div>
+   721→          </div>
+   722→        </SettingRow>
+   723→        <Separator className="bg-white/5" />
+   724→
+   725→        {/* Show Aurora */}
+   726→        <SettingRow label="Show Aurora Background" description="Animated gradient background effect">
+   727→          <Switch
+   728→            checked={settings.showAurora}
+   729→            onCheckedChange={(v) => setSettings((p) => ({ ...p, showAurora: v }))}
+   730→          />
+   731→        </SettingRow>
+   732→        <Separator className="bg-white/5" />
+   733→
+   734→        {/* Show Sparkles */}
+   735→        <SettingRow label="Show Sparkle Particles" description="Floating particle effects">
+   736→          <Switch
+   737→            checked={settings.showSparkles}
+   738→            onCheckedChange={(v) => setSettings((p) => ({ ...p, showSparkles: v }))}
+   739→          />
+   740→        </SettingRow>
+   741→      </SettingCard>
+   742→
+   743→      <SettingCard>
+   744→        <SectionHeader title="Layout" icon={<LayoutGrid className="w-4 h-4" />} />
+   745→
+   746→        {/* Layout Density */}
+   747→        <SettingRow label="Layout Density" description="Content spacing and padding">
+   748→          <GlassSelect
+   749→            value={settings.layoutDensity}
+   750→            onValueChange={(v) => setSettings((p) => ({ ...p, layoutDensity: v }))}
+   751→            options={[
+   752→              { value: 'compact', label: 'Compact' },
+   753→              { value: 'comfortable', label: 'Comfortable' },
+   754→              { value: 'spacious', label: 'Spacious' },
+   755→            ]}
+   756→          />
+   757→        </SettingRow>
+   758→        <Separator className="bg-white/5" />
+   759→
+   760→        {/* Border Radius */}
+   761→        <SettingRow label="Border Radius" description={`Current: ${settings.borderRadius}px`}>
+   762→          <div className="w-full sm:w-64">
+   763→            <Slider
+   764→              value={[settings.borderRadius]}
+   765→              min={0} max={24} step={1}
+   766→              onValueChange={(v) => setSettings((p) => ({ ...p, borderRadius: v[0] }))}
+   767→            />
+   768→            <div className="flex justify-between text-[10px] text-[var(--muted-foreground)] mt-1">
+   769→              <span>0</span><span>24</span>
+   770→            </div>
+   771→          </div>
+   772→        </SettingRow>
+   773→        <Separator className="bg-white/5" />
+   774→
+   775→        {/* Font Size */}
+   776→        <SettingRow label="Font Size" description="Base font size for the interface">
+   777→          <GlassSelect
+   778→            value={settings.fontSize}
+   779→            onValueChange={(v) => setSettings((p) => ({ ...p, fontSize: v }))}
+   780→            options={[
+   781→              { value: 'small', label: 'Small' },
+   782→              { value: 'medium', label: 'Medium' },
+   783→              { value: 'large', label: 'Large' },
+   784→              { value: 'xlarge', label: 'Extra Large' },
+   785→            ]}
+   786→          />
+   787→        </SettingRow>
+   788→        <Separator className="bg-white/5" />
+   789→
+   790→        {/* Reduce Motion */}
+   791→        <SettingRow label="Reduce Motion" description="Minimize animations and transitions">
+   792→          <Switch
+   793→            checked={settings.reduceMotion}
+   794→            onCheckedChange={(v) => setSettings((p) => ({ ...p, reduceMotion: v }))}
+   795→          />
+   796→        </SettingRow>
+   797→        <Separator className="bg-white/5" />
+   798→
+   799→        {/* Animation Speed */}
+   800→        <SettingRow label="Animation Speed" description="Speed of UI transitions">
+   801→          <GlassSelect
+   802→            value={settings.animationSpeed}
+   803→            onValueChange={(v) => setSettings((p) => ({ ...p, animationSpeed: v }))}
+   804→            options={[
+   805→              { value: 'slow', label: 'Slow' },
+   806→              { value: 'normal', label: 'Normal' },
+   807→              { value: 'fast', label: 'Fast' },
+   808→            ]}
+   809→          />
+   810→        </SettingRow>
+   811→      </SettingCard>
+   812→
+   813→      <div className="flex justify-end">
+   814→        <SaveButton onClick={onSave} saving={false} saved={false} />
+   815→      </div>
+   816→    </div>
+   817→  );
+   818→}
+   819→
+   820→/* ================================================================
+   821→   PLAYBACK TAB
+   822→   ================================================================ */
+   823→function PlaybackTab({ settings, setSettings, onSave }: {
+   824→  settings: UserSettingsData; setSettings: React.Dispatch<React.SetStateAction<UserSettingsData>>; onSave: () => void;
+   825→}) {
+   826→  return (
+   827→    <div className="space-y-4">
+   828→      <SettingCard>
+   829→        <SectionHeader title="Video Quality" icon={<Video className="w-4 h-4" />} />
+   830→
+   831→        <SettingRow label="Default Video Quality" description="Preferred video resolution">
+   832→          <GlassSelect
+   833→            value={settings.defaultVideoQuality}
+   834→            onValueChange={(v) => setSettings((p) => ({ ...p, defaultVideoQuality: v }))}
+   835→            options={[
+   836→              { value: '4k', label: '4K' },
+   837→              { value: '1080p', label: '1080p' },
+   838→              { value: '720p', label: '720p' },
+   839→              { value: '480p', label: '480p' },
+   840→              { value: '360p', label: '360p' },
+   841→            ]}
+   842→          />
+   843→        </SettingRow>
+   844→        <Separator className="bg-white/5" />
+   845→
+   846→        <SettingRow label="Maximum Bitrate" description="Maximum streaming quality">
+   847→          <GlassSelect
+   848→            value={settings.maximumBitrate}
+   849→            onValueChange={(v) => setSettings((p) => ({ ...p, maximumBitrate: v }))}
+   850→            options={[
+   851→              { value: 'auto', label: 'Auto' },
+   852→              { value: '5', label: '5 Mbps' },
+   853→              { value: '10', label: '10 Mbps' },
+   854→              { value: '25', label: '25 Mbps' },
+   855→              { value: '50', label: '50 Mbps' },
+   856→            ]}
+   857→          />
+   858→        </SettingRow>
+   859→        <Separator className="bg-white/5" />
+   860→
+   861→        <SettingRow label="Hardware Acceleration" description="Use GPU for video decoding">
+   862→          <Switch checked={settings.hardwareAcceleration} onCheckedChange={(v) => setSettings((p) => ({ ...p, hardwareAcceleration: v }))} />
+   863→        </SettingRow>
+   864→        <Separator className="bg-white/5" />
+   865→
+   866→        <SettingRow label="Streaming Buffer Size" description="Pre-buffer duration">
+   867→          <GlassSelect
+   868→            value={settings.streamingBuffer}
+   869→            onValueChange={(v) => setSettings((p) => ({ ...p, streamingBuffer: v }))}
+   870→            options={[
+   871→              { value: '10', label: '10s' },
+   872→              { value: '20', label: '20s' },
+   873→              { value: '30', label: '30s' },
+   874→              { value: '60', label: '60s' },
+   875→              { value: '120', label: '120s' },
+   876→            ]}
+   877→          />
+   878→        </SettingRow>
+   879→      </SettingCard>
+   880→
+   881→      <SettingCard>
+   882→        <SectionHeader title="Autoplay & Skipping" icon={<Zap className="w-4 h-4" />} />
+   883→
+   884→        <SettingRow label="Auto-Play Next Episode" description="Automatically play the next episode">
+   885→          <Switch checked={settings.autoPlayNext} onCheckedChange={(v) => setSettings((p) => ({ ...p, autoPlayNext: v }))} />
+   886→        </SettingRow>
+   887→        <Separator className="bg-white/5" />
+   888→
+   889→        <SettingRow label="Auto-Play Trailers" description="Play trailers on title pages">
+   890→          <Switch checked={settings.autoPlayTrailers} onCheckedChange={(v) => setSettings((p) => ({ ...p, autoPlayTrailers: v }))} />
+   891→        </SettingRow>
+   892→        <Separator className="bg-white/5" />
+   893→
+   894→        <SettingRow label="Skip Intro Automatically" description="Skip TV show intros">
+   895→          <Switch checked={settings.skipIntro} onCheckedChange={(v) => setSettings((p) => ({ ...p, skipIntro: v }))} />
+   896→        </SettingRow>
+   897→        <Separator className="bg-white/5" />
+   898→
+   899→        <SettingRow label="Skip Recap Automatically" description="Skip episode recaps">
+   900→          <Switch checked={settings.skipRecap} onCheckedChange={(v) => setSettings((p) => ({ ...p, skipRecap: v }))} />
+   901→        </SettingRow>
+   902→      </SettingCard>
+   903→
+   904→      <SettingCard>
+   905→        <SectionHeader title="Audio" icon={<Volume2 className="w-4 h-4" />} />
+   906→
+   907→        <SettingRow label="Default Volume" description={`Volume: ${Math.round(settings.defaultVolume * 100)}%`}>
+   908→          <div className="w-full sm:w-64">
+   909→            <Slider
+   910→              value={[settings.defaultVolume * 100]}
+   911→              min={0} max={100} step={1}
+   912→              onValueChange={(v) => setSettings((p) => ({ ...p, defaultVolume: v[0] / 100 }))}
+   913→            />
+   914→            <div className="flex justify-between text-[10px] text-[var(--muted-foreground)] mt-1">
+   915→              <span>0%</span><span>100%</span>
+   916→            </div>
+   917→          </div>
+   918→        </SettingRow>
+   919→        <Separator className="bg-white/5" />
+   920→
+   921→        <SettingRow label="Preferred Audio Language" description="Default audio track language">
+   922→          <GlassSelect
+   923→            value={settings.audioLanguage}
+   924→            onValueChange={(v) => setSettings((p) => ({ ...p, audioLanguage: v }))}
+   925→            options={[
+   926→              { value: 'en', label: 'English' }, { value: 'es', label: 'Spanish' },
+   927→              { value: 'fr', label: 'French' }, { value: 'de', label: 'German' },
+   928→              { value: 'ja', label: 'Japanese' }, { value: 'ko', label: 'Korean' },
+   929→              { value: 'zh', label: 'Chinese' }, { value: 'ar', label: 'Arabic' },
+   930→              { value: 'hi', label: 'Hindi' }, { value: 'pt', label: 'Portuguese' },
+   931→            ]}
+   932→          />
+   933→        </SettingRow>
+   934→        <Separator className="bg-white/5" />
+   935→
+   936→        <SettingRow label="Default Playback Speed" description="Playback speed for all content">
+   937→          <GlassSelect
+   938→            value={settings.playbackSpeed}
+   939→            onValueChange={(v) => setSettings((p) => ({ ...p, playbackSpeed: v }))}
+   940→            options={[
+   941→              { value: '0.25', label: '0.25x' }, { value: '0.5', label: '0.5x' },
+   942→              { value: '0.75', label: '0.75x' }, { value: '1', label: '1x' },
+   943→              { value: '1.25', label: '1.25x' }, { value: '1.5', label: '1.5x' },
+   944→              { value: '2', label: '2x' },
+   945→            ]}
+   946→          />
+   947→        </SettingRow>
+   948→      </SettingCard>
+   949→
+   950→      <SettingCard>
+   951→        <SectionHeader title="Subtitles" icon={<Subtitles className="w-4 h-4" />} />
+   952→
+   953→        <SettingRow label="Enable Subtitles by Default" description="Show subtitles for all content">
+   954→          <Switch checked={settings.enableSubtitles} onCheckedChange={(v) => setSettings((p) => ({ ...p, enableSubtitles: v }))} />
+   955→        </SettingRow>
+   956→        <Separator className="bg-white/5" />
+   957→
+   958→        <SettingRow label="Preferred Subtitle Language">
+   959→          <GlassSelect
+   960→            value={settings.subtitleLanguage}
+   961→            onValueChange={(v) => setSettings((p) => ({ ...p, subtitleLanguage: v }))}
+   962→            options={[
+   963→              { value: 'en', label: 'English' }, { value: 'es', label: 'Spanish' },
+   964→              { value: 'fr', label: 'French' }, { value: 'de', label: 'German' },
+   965→              { value: 'ja', label: 'Japanese' }, { value: 'ko', label: 'Korean' },
+   966→              { value: 'zh', label: 'Chinese' }, { value: 'ar', label: 'Arabic' },
+   967→              { value: 'hi', label: 'Hindi' }, { value: 'pt', label: 'Portuguese' },
+   968→            ]}
+   969→          />
+   970→        </SettingRow>
+   971→        <Separator className="bg-white/5" />
+   972→
+   973→        <SettingRow label="Subtitle Font Size">
+   974→          <GlassSelect
+   975→            value={settings.subtitleFontSize}
+   976→            onValueChange={(v) => setSettings((p) => ({ ...p, subtitleFontSize: v }))}
+   977→            options={[
+   978→              { value: 'small', label: 'Small' },
+   979→              { value: 'medium', label: 'Medium' },
+   980→              { value: 'large', label: 'Large' },
+   981→              { value: 'xlarge', label: 'Extra Large' },
+   982→            ]}
+   983→          />
+   984→        </SettingRow>
+   985→        <Separator className="bg-white/5" />
+   986→
+   987→        <SettingRow label="Subtitle Color">
+   988→          <GlassSelect
+   989→            value={settings.subtitleColor}
+   990→            onValueChange={(v) => setSettings((p) => ({ ...p, subtitleColor: v }))}
+   991→            options={[
+   992→              { value: 'white', label: 'White' },
+   993→              { value: 'yellow', label: 'Yellow' },
+   994→              { value: 'cyan', label: 'Cyan' },
+   995→              { value: 'green', label: 'Green' },
+   996→            ]}
+   997→          />
+   998→        </SettingRow>
+   999→      </SettingCard>
+  1000→
+  1001→      <div className="flex justify-end">
+  1002→        <SaveButton onClick={onSave} saving={false} saved={false} />
+  1003→      </div>
+  1004→    </div>
+  1005→  );
+  1006→}
+  1007→
+  1008→/* ================================================================
+  1009→   NOTIFICATIONS TAB
+  1010→   ================================================================ */
+  1011→function NotificationsTab({ settings, setSettings, onSave }: {
+  1012→  settings: UserSettingsData; setSettings: React.Dispatch<React.SetStateAction<UserSettingsData>>; onSave: () => void;
+  1013→}) {
+  1014→  return (
+  1015→    <div className="space-y-4">
+  1016→      <SettingCard>
+  1017→        <SectionHeader title="Push Notifications" icon={<Bell className="w-4 h-4" />} />
+  1018→
+  1019→        <SettingRow label="Push Notifications" description="Enable push notification service">
+  1020→          <Switch checked={settings.pushNotifications} onCheckedChange={(v) => setSettings((p) => ({ ...p, pushNotifications: v }))} />
+  1021→        </SettingRow>
+  1022→        <Separator className="bg-white/5" />
+  1023→
+  1024→        <SettingRow label="New Release Alerts" description="Get notified about new content">
+  1025→          <Switch checked={settings.newReleaseAlerts} onCheckedChange={(v) => setSettings((p) => ({ ...p, newReleaseAlerts: v }))} />
+  1026→        </SettingRow>
+  1027→        <Separator className="bg-white/5" />
+  1028→
+  1029→        <SettingRow label="Watchlist Movie Alerts" description="Alert when watchlist titles are available">
+  1030→          <Switch checked={settings.watchlistAlerts} onCheckedChange={(v) => setSettings((p) => ({ ...p, watchlistAlerts: v }))} />
+  1031→        </SettingRow>
+  1032→        <Separator className="bg-white/5" />
+  1033→
+  1034→        <SettingRow label="Recommendation Alerts" description="Personalized content suggestions">
+  1035→          <Switch checked={settings.recommendationAlerts} onCheckedChange={(v) => setSettings((p) => ({ ...p, recommendationAlerts: v }))} />
+  1036→        </SettingRow>
+  1037→        <Separator className="bg-white/5" />
+  1038→
+  1039→        <SettingRow label="System Alerts" description="Important system notifications">
+  1040→          <Switch checked={settings.systemAlerts} onCheckedChange={(v) => setSettings((p) => ({ ...p, systemAlerts: v }))} />
+  1041→        </SettingRow>
+  1042→        <Separator className="bg-white/5" />
+  1043→
+  1044→        <SettingRow label="Notification Badge" description="Show unread count badge">
+  1045→          <Switch checked={settings.notificationBadge} onCheckedChange={(v) => setSettings((p) => ({ ...p, notificationBadge: v }))} />
+  1046→        </SettingRow>
+  1047→      </SettingCard>
+  1048→
+  1049→      <SettingCard>
+  1050→        <SectionHeader title="Quiet Hours" icon={<Moon className="w-4 h-4" />} />
+  1051→
+  1052→        <SettingRow label="Enable Quiet Hours" description="Mute notifications during set hours">
+  1053→          <Switch checked={settings.quietHoursEnabled} onCheckedChange={(v) => setSettings((p) => ({ ...p, quietHoursEnabled: v }))} />
+  1054→        </SettingRow>
+  1055→        {settings.quietHoursEnabled && (
+  1056→          <>
+  1057→            <Separator className="bg-white/5" />
+  1058→            <SettingRow label="Start Time">
+  1059→              <Input
+  1060→                type="time"
+  1061→                value={settings.quietHoursStart}
+  1062→                onChange={(e) => setSettings((p) => ({ ...p, quietHoursStart: e.target.value }))}
+  1063→                className="glass-input bg-black/80 backdrop-blur-xl border-[var(--glass-border)] text-sm text-[var(--foreground)]"
+  1064→              />
+  1065→            </SettingRow>
+  1066→            <Separator className="bg-white/5" />
+  1067→            <SettingRow label="End Time">
+  1068→              <Input
+  1069→                type="time"
+  1070→                value={settings.quietHoursEnd}
+  1071→                onChange={(e) => setSettings((p) => ({ ...p, quietHoursEnd: e.target.value }))}
+  1072→                className="glass-input bg-black/80 backdrop-blur-xl border-[var(--glass-border)] text-sm text-[var(--foreground)]"
+  1073→              />
+  1074→            </SettingRow>
+  1075→          </>
+  1076→        )}
+  1077→      </SettingCard>
+  1078→
+  1079→      <SettingCard>
+  1080→        <SectionHeader title="Notification Settings" icon={<Settings className="w-4 h-4" />} />
+  1081→
+  1082→        <SettingRow label="Notification Sound" description="Sound for incoming notifications">
+  1083→          <GlassSelect
+  1084→            value={settings.notificationSound}
+  1085→            onValueChange={(v) => setSettings((p) => ({ ...p, notificationSound: v }))}
+  1086→            options={[
+  1087→              { value: 'default', label: 'Default' },
+  1088→              { value: 'soft', label: 'Soft' },
+  1089→              { value: 'chime', label: 'Chime' },
+  1090→              { value: 'none', label: 'None' },
+  1091→            ]}
+  1092→          />
+  1093→        </SettingRow>
+  1094→      </SettingCard>
+  1095→
+  1096→      <div className="flex justify-end">
+  1097→        <SaveButton onClick={onSave} saving={false} saved={false} />
+  1098→      </div>
+  1099→    </div>
+  1100→  );
+  1101→}
+  1102→
+  1103→/* ================================================================
+  1104→   PRIVACY TAB
+  1105→   ================================================================ */
+  1106→function PrivacyTab({ settings, setSettings, onSave }: {
+  1107→  settings: UserSettingsData; setSettings: React.Dispatch<React.SetStateAction<UserSettingsData>>; onSave: () => void;
+  1108→}) {
+  1109→  const handleClearHistory = async () => {
+  1110→    try {
+  1111→      await fetch('/api/history', { method: 'DELETE' });
+  1112→      toast.success('Watch history cleared');
+  1113→    } catch {
+  1114→      toast.error('Failed to clear history');
+  1115→    }
+  1116→  };
+  1117→
+  1118→  const handleClearCache = () => {
+  1119→    if (typeof window !== 'undefined') {
+  1120→      localStorage.clear();
+  1121→      sessionStorage.clear();
+  1122→      toast.success('Cache cleared. Please reload the page.');
+  1123→    }
+  1124→  };
+  1125→
+  1126→  return (
+  1127→    <div className="space-y-4">
+  1128→      <SettingCard>
+  1129→        <SectionHeader title="Profile Visibility" icon={<Eye className="w-4 h-4" />} />
+  1130→
+  1131→        <SettingRow label="Profile Visibility" description="Who can see your profile">
+  1132→          <GlassSelect
+  1133→            value={settings.profileVisibility}
+  1134→            onValueChange={(v) => setSettings((p) => ({ ...p, profileVisibility: v }))}
+  1135→            options={[
+  1136→              { value: 'private', label: 'Private' },
+  1137→              { value: 'friends', label: 'Friends Only' },
+  1138→              { value: 'public', label: 'Public' },
+  1139→            ]}
+  1140→          />
+  1141→        </SettingRow>
+  1142→        <Separator className="bg-white/5" />
+  1143→
+  1144→        <SettingRow label="Show Watch History to Others">
+  1145→          <Switch checked={settings.showWatchHistory} onCheckedChange={(v) => setSettings((p) => ({ ...p, showWatchHistory: v }))} />
+  1146→        </SettingRow>
+  1147→        <Separator className="bg-white/5" />
+  1148→
+  1149→        <SettingRow label="Show Watchlist to Others">
+  1150→          <Switch checked={settings.showWatchlist} onCheckedChange={(v) => setSettings((p) => ({ ...p, showWatchlist: v }))} />
+  1151→        </SettingRow>
+  1152→        <Separator className="bg-white/5" />
+  1153→
+  1154→        <SettingRow label="Show Online Status">
+  1155→          <Switch checked={settings.showOnlineStatus} onCheckedChange={(v) => setSettings((p) => ({ ...p, showOnlineStatus: v }))} />
+  1156→        </SettingRow>
+  1157→      </SettingCard>
+  1158→
+  1159→      <SettingCard>
+  1160→        <SectionHeader title="Data & Security" icon={<Lock className="w-4 h-4" />} />
+  1161→
+  1162→        <SettingRow label="Data Collection for Recommendations" description="Allow usage data for personalization">
+  1163→          <Switch checked={settings.dataCollection} onCheckedChange={(v) => setSettings((p) => ({ ...p, dataCollection: v }))} />
+  1164→        </SettingRow>
+  1165→        <Separator className="bg-white/5" />
+  1166→
+  1167→        <SettingRow label="Two-Factor Authentication" description="Add extra security to your account">
+  1168→          <Switch checked={settings.twoFactorAuth} onCheckedChange={(v) => setSettings((p) => ({ ...p, twoFactorAuth: v }))} />
+  1169→        </SettingRow>
+  1170→        <Separator className="bg-white/5" />
+  1171→
+  1172→        <SettingRow label="Login Notifications" description="Get notified of new logins">
+  1173→          <Switch checked={settings.loginNotifications} onCheckedChange={(v) => setSettings((p) => ({ ...p, loginNotifications: v }))} />
+  1174→        </SettingRow>
+  1175→      </SettingCard>
+  1176→
+  1177→      <SettingCard>
+  1178→        <SectionHeader title="Data Management" icon={<Trash className="w-4 h-4" />} />
+  1179→
+  1180→        <SettingRow label="Clear Watch History" description="Remove all your watch history">
+  1181→          <AlertDialog>
+  1182→            <AlertDialogTrigger asChild>
+  1183→              <Button variant="destructive" size="sm" className="bg-red-500/20 text-red-400 hover:bg-red-500/30 hover:text-red-300">
+  1184→                <Trash2 className="w-3 h-3 mr-1" /> Clear
+  1185→              </Button>
+  1186→            </AlertDialogTrigger>
+  1187→            <AlertDialogContent className="bg-black/90 backdrop-blur-xl border-[var(--glass-border)]">
+  1188→              <AlertDialogHeader>
+  1189→                <AlertDialogTitle className="text-[var(--foreground)]">Clear Watch History?</AlertDialogTitle>
+  1190→                <AlertDialogDescription className="text-[var(--muted-foreground)]">This action cannot be undone. All watch history will be permanently deleted.</AlertDialogDescription>
+  1191→              </AlertDialogHeader>
+  1192→              <AlertDialogFooter>
+  1193→                <AlertDialogCancel className="border-[var(--glass-border)] text-[var(--foreground)]">Cancel</AlertDialogCancel>
+  1194→                <AlertDialogAction onClick={handleClearHistory} className="bg-red-500 hover:bg-red-600">Clear All</AlertDialogAction>
+  1195→              </AlertDialogFooter>
+  1196→            </AlertDialogContent>
+  1197→          </AlertDialog>
+  1198→        </SettingRow>
+  1199→        <Separator className="bg-white/5" />
+  1200→
+  1201→        <SettingRow label="Clear Search History" description="Remove all search queries">
+  1202→          <AlertDialog>
+  1203→            <AlertDialogTrigger asChild>
+  1204→              <Button variant="destructive" size="sm" className="bg-red-500/20 text-red-400 hover:bg-red-500/30 hover:text-red-300">
+  1205→                <Trash2 className="w-3 h-3 mr-1" /> Clear
+  1206→              </Button>
+  1207→            </AlertDialogTrigger>
+  1208→            <AlertDialogContent className="bg-black/90 backdrop-blur-xl border-[var(--glass-border)]">
+  1209→              <AlertDialogHeader>
+  1210→                <AlertDialogTitle className="text-[var(--foreground)]">Clear Search History?</AlertDialogTitle>
+  1211→                <AlertDialogDescription className="text-[var(--muted-foreground)]">This will remove all your search history.</AlertDialogDescription>
+  1212→              </AlertDialogHeader>
+  1213→              <AlertDialogFooter>
+  1214→                <AlertDialogCancel className="border-[var(--glass-border)] text-[var(--foreground)]">Cancel</AlertDialogCancel>
+  1215→                <AlertDialogAction onClick={() => toast.success('Search history cleared')} className="bg-red-500 hover:bg-red-600">Clear</AlertDialogAction>
+  1216→              </AlertDialogFooter>
+  1217→            </AlertDialogContent>
+  1218→          </AlertDialog>
+  1219→        </SettingRow>
+  1220→        <Separator className="bg-white/5" />
+  1221→
+  1222→        <SettingRow label="Clear All Cache" description="Remove cached data and temporary files">
+  1223→          <AlertDialog>
+  1224→            <AlertDialogTrigger asChild>
+  1225→              <Button variant="destructive" size="sm" className="bg-red-500/20 text-red-400 hover:bg-red-500/30 hover:text-red-300">
+  1226→                <Trash2 className="w-3 h-3 mr-1" /> Clear
+  1227→              </Button>
+  1228→            </AlertDialogTrigger>
+  1229→            <AlertDialogContent className="bg-black/90 backdrop-blur-xl border-[var(--glass-border)]">
+  1230→              <AlertDialogHeader>
+  1231→                <AlertDialogTitle className="text-[var(--foreground)]">Clear All Cache?</AlertDialogTitle>
+  1232→                <AlertDialogDescription className="text-[var(--muted-foreground)]">This will clear local storage and cached data. You may need to reload the page.</AlertDialogDescription>
+  1233→              </AlertDialogHeader>
+  1234→              <AlertDialogFooter>
+  1235→                <AlertDialogCancel className="border-[var(--glass-border)] text-[var(--foreground)]">Cancel</AlertDialogCancel>
+  1236→                <AlertDialogAction onClick={handleClearCache} className="bg-red-500 hover:bg-red-600">Clear All</AlertDialogAction>
+  1237→              </AlertDialogFooter>
+  1238→            </AlertDialogContent>
+  1239→          </AlertDialog>
+  1240→        </SettingRow>
+  1241→      </SettingCard>
+  1242→
+  1243→      <div className="flex justify-end">
+  1244→        <SaveButton onClick={onSave} saving={false} saved={false} />
+  1245→      </div>
+  1246→    </div>
+  1247→  );
+  1248→}
+  1249→
+  1250→/* ================================================================
+  1251→   DOWNLOADS TAB
+  1252→   ================================================================ */
+  1253→function DownloadsTab({ settings, setSettings, onSave }: {
+  1254→  settings: UserSettingsData; setSettings: React.Dispatch<React.SetStateAction<UserSettingsData>>; onSave: () => void;
+  1255→}) {
+  1256→  return (
+  1257→    <div className="space-y-4">
+  1258→      <SettingCard>
+  1259→        <SectionHeader title="Download Settings" icon={<Download className="w-4 h-4" />} />
+  1260→
+  1261→        <SettingRow label="Default Download Quality">
+  1262→          <GlassSelect
+  1263→            value={settings.downloadQuality}
+  1264→            onValueChange={(v) => setSettings((p) => ({ ...p, downloadQuality: v }))}
+  1265→            options={[
+  1266→              { value: '4k', label: '4K' },
+  1267→              { value: '1080p', label: '1080p' },
+  1268→              { value: '720p', label: '720p' },
+  1269→              { value: '480p', label: '480p' },
+  1270→            ]}
+  1271→          />
+  1272→        </SettingRow>
+  1273→        <Separator className="bg-white/5" />
+  1274→
+  1275→        <SettingRow label="Download Path">
+  1276→          <div className="flex items-center gap-2">
+  1277→            <GlassInput value={settings.downloadPath || '~/Downloads'} onChange={(v) => setSettings((p) => ({ ...p, downloadPath: v }))} className="w-full sm:w-48" />
+  1278→            <Button variant="outline" size="sm" className="border-[var(--glass-border)] text-[var(--foreground)] shrink-0">
+  1279→              <FolderOpen className="w-3 h-3" />
+  1280→            </Button>
+  1281→          </div>
+  1282→        </SettingRow>
+  1283→        <Separator className="bg-white/5" />
+  1284→
+  1285→        <SettingRow label="Auto-Delete After Watching" description="Remove downloads after playback">
+  1286→          <Switch checked={settings.autoDeleteWatched} onCheckedChange={(v) => setSettings((p) => ({ ...p, autoDeleteWatched: v }))} />
+  1287→        </SettingRow>
+  1288→        <Separator className="bg-white/5" />
+  1289→
+  1290→        <SettingRow label="Wi-Fi Only Downloads" description="Only download on Wi-Fi networks">
+  1291→          <Switch checked={settings.wifiOnlyDownloads} onCheckedChange={(v) => setSettings((p) => ({ ...p, wifiOnlyDownloads: v }))} />
+  1292→        </SettingRow>
+  1293→        <Separator className="bg-white/5" />
+  1294→
+  1295→        <SettingRow label="Download Notification" description="Notify when downloads complete">
+  1296→          <Switch checked={settings.downloadNotification} onCheckedChange={(v) => setSettings((p) => ({ ...p, downloadNotification: v }))} />
+  1297→        </SettingRow>
+  1298→        <Separator className="bg-white/5" />
+  1299→
+  1300→        <SettingRow label="Auto-Download New Episodes" description="Download new episodes automatically">
+  1301→          <Switch checked={settings.autoDownloadEpisodes} onCheckedChange={(v) => setSettings((p) => ({ ...p, autoDownloadEpisodes: v }))} />
+  1302→        </SettingRow>
+  1303→      </SettingCard>
+  1304→
+  1305→      <SettingCard>
+  1306→        <SectionHeader title="Download Limits" icon={<Gauge className="w-4 h-4" />} />
+  1307→
+  1308→        <SettingRow label="Maximum Concurrent Downloads" description="Number of simultaneous downloads">
+  1309→          <GlassSelect
+  1310→            value={String(settings.maxConcurrentDownloads)}
+  1311→            onValueChange={(v) => setSettings((p) => ({ ...p, maxConcurrentDownloads: Number(v) }))}
+  1312→            options={[
+  1313→              { value: '1', label: '1' },
+  1314→              { value: '2', label: '2' },
+  1315→              { value: '3', label: '3' },
+  1316→              { value: '5', label: '5' },
+  1317→            ]}
+  1318→          />
+  1319→        </SettingRow>
+  1320→        <Separator className="bg-white/5" />
+  1321→
+  1322→        <SettingRow label={`Maximum Download Storage: ${settings.maxDownloadStorage}GB`}>
+  1323→          <div className="w-full sm:w-64">
+  1324→            <Slider
+  1325→              value={[settings.maxDownloadStorage]}
+  1326→              min={1} max={50} step={1}
+  1327→              onValueChange={(v) => setSettings((p) => ({ ...p, maxDownloadStorage: v[0] }))}
+  1328→            />
+  1329→            <div className="flex justify-between text-[10px] text-[var(--muted-foreground)] mt-1">
+  1330→              <span>1GB</span><span>50GB</span>
+  1331→            </div>
+  1332→          </div>
+  1333→        </SettingRow>
+  1334→      </SettingCard>
+  1335→
+  1336→      <div className="flex justify-end">
+  1337→        <SaveButton onClick={onSave} saving={false} saved={false} />
+  1338→      </div>
+  1339→    </div>
+  1340→  );
+  1341→}
+  1342→
+  1343→/* ================================================================
+  1344→   ACCESSIBILITY TAB
+  1345→   ================================================================ */
+  1346→function AccessibilityTab({ settings, setSettings, onSave }: {
+  1347→  settings: UserSettingsData; setSettings: React.Dispatch<React.SetStateAction<UserSettingsData>>; onSave: () => void;
+  1348→}) {
+  1349→  return (
+  1350→    <div className="space-y-4">
+  1351→      <SettingCard>
+  1352→        <SectionHeader title="Visual Accessibility" icon={<Accessibility className="w-4 h-4" />} />
+  1353→
+  1354→        <SettingRow label="High Contrast Mode" description="Increase contrast for better visibility">
+  1355→          <Switch checked={settings.highContrast} onCheckedChange={(v) => setSettings((p) => ({ ...p, highContrast: v }))} />
+  1356→        </SettingRow>
+  1357→        <Separator className="bg-white/5" />
+  1358→
+  1359→        <SettingRow label="Large Text" description="Increase font size throughout the app">
+  1360→          <Switch checked={settings.largeText} onCheckedChange={(v) => setSettings((p) => ({ ...p, largeText: v }))} />
+  1361→        </SettingRow>
+  1362→        <Separator className="bg-white/5" />
+  1363→
+  1364→        <SettingRow label="Color Blindness Mode" description="Adjust colors for color vision deficiency">
+  1365→          <GlassSelect
+  1366→            value={settings.colorBlindness}
+  1367→            onValueChange={(v) => setSettings((p) => ({ ...p, colorBlindness: v }))}
+  1368→            options={[
+  1369→              { value: 'none', label: 'None' },
+  1370→              { value: 'protanopia', label: 'Protanopia' },
+  1371→              { value: 'deuteranopia', label: 'Deuteranopia' },
+  1372→              { value: 'tritanopia', label: 'Tritanopia' },
+  1373→            ]}
+  1374→          />
+  1375→        </SettingRow>
+  1376→        <Separator className="bg-white/5" />
+  1377→
+  1378→        <SettingRow label="Focus Indicators" description="Show visible focus rings on interactive elements">
+  1379→          <Switch checked={settings.focusIndicators} onCheckedChange={(v) => setSettings((p) => ({ ...p, focusIndicators: v }))} />
+  1380→        </SettingRow>
+  1381→      </SettingCard>
+  1382→
+  1383→      <SettingCard>
+  1384→        <SectionHeader title="Assistive Technology" icon={<Ear className="w-4 h-4" />} />
+  1385→
+  1386→        <SettingRow label="Screen Reader Support" description="Optimize for screen reader usage">
+  1387→          <Switch checked={settings.screenReader} onCheckedChange={(v) => setSettings((p) => ({ ...p, screenReader: v }))} />
+  1388→        </SettingRow>
+  1389→        <Separator className="bg-white/5" />
+  1390→
+  1391→        <SettingRow label="Closed Captions" description="Enable captions for all media">
+  1392→          <Switch checked={settings.closedCaptions} onCheckedChange={(v) => setSettings((p) => ({ ...p, closedCaptions: v }))} />
+  1393→        </SettingRow>
+  1394→        <Separator className="bg-white/5" />
+  1395→
+  1396→        <SettingRow label="Audio Descriptions" description="Enable audio descriptions for the visually impaired">
+  1397→          <Switch checked={settings.audioDescriptions} onCheckedChange={(v) => setSettings((p) => ({ ...p, audioDescriptions: v }))} />
+  1398→        </SettingRow>
+  1399→        <Separator className="bg-white/5" />
+  1400→
+  1401→        <SettingRow label="Keyboard Navigation" description="Enhanced keyboard shortcuts and navigation">
+  1402→          <Switch checked={settings.keyboardNavigation} onCheckedChange={(v) => setSettings((p) => ({ ...p, keyboardNavigation: v }))} />
+  1403→        </SettingRow>
+  1404→      </SettingCard>
+  1405→
+  1406→      <div className="flex justify-end">
+  1407→        <SaveButton onClick={onSave} saving={false} saved={false} />
+  1408→      </div>
+  1409→    </div>
+  1410→  );
+  1411→}
+  1412→
+  1413→/* ================================================================
+  1414→   LANGUAGE TAB
+  1415→   ================================================================ */
+  1416→function LanguageTab({ settings, setSettings, onSave }: {
+  1417→  settings: UserSettingsData; setSettings: React.Dispatch<React.SetStateAction<UserSettingsData>>; onSave: () => void;
+  1418→}) {
+  1419→  return (
+  1420→    <div className="space-y-4">
+  1421→      <SettingCard>
+  1422→        <SectionHeader title="Language & Region" icon={<Languages className="w-4 h-4" />} />
+  1423→
+  1424→        <SettingRow label="Interface Language" description="Language for menus and labels">
+  1425→          <GlassSelect
+  1426→            value={settings.interfaceLanguage}
+  1427→            onValueChange={(v) => setSettings((p) => ({ ...p, interfaceLanguage: v }))}
+  1428→            options={[
+  1429→              { value: 'en', label: 'English' }, { value: 'es', label: 'Spanish' },
+  1430→              { value: 'fr', label: 'French' }, { value: 'de', label: 'German' },
+  1431→              { value: 'ja', label: 'Japanese' }, { value: 'ko', label: 'Korean' },
+  1432→              { value: 'zh', label: 'Chinese' }, { value: 'ar', label: 'Arabic' },
+  1433→              { value: 'hi', label: 'Hindi' }, { value: 'pt', label: 'Portuguese' },
+  1434→            ]}
+  1435→          />
+  1436→        </SettingRow>
+  1437→        <Separator className="bg-white/5" />
+  1438→
+  1439→        <SettingRow label="Content Region" description="Regional content availability">
+  1440→          <GlassSelect
+  1441→            value={settings.contentRegion}
+  1442→            onValueChange={(v) => setSettings((p) => ({ ...p, contentRegion: v }))}
+  1443→            options={[
+  1444→              { value: 'us', label: 'US' }, { value: 'uk', label: 'UK' },
+  1445→              { value: 'ca', label: 'Canada' }, { value: 'au', label: 'Australia' },
+  1446→              { value: 'de', label: 'Germany' }, { value: 'fr', label: 'France' },
+  1447→              { value: 'jp', label: 'Japan' }, { value: 'kr', label: 'Korea' },
+  1448→              { value: 'in', label: 'India' }, { value: 'br', label: 'Brazil' },
+  1449→            ]}
+  1450→          />
+  1451→        </SettingRow>
+  1452→      </SettingCard>
+  1453→
+  1454→      <SettingCard>
+  1455→        <SectionHeader title="Formatting" icon={<Calendar className="w-4 h-4" />} />
+  1456→
+  1457→        <SettingRow label="Date Format">
+  1458→          <GlassSelect
+  1459→            value={settings.dateFormat}
+  1460→            onValueChange={(v) => setSettings((p) => ({ ...p, dateFormat: v }))}
+  1461→            options={[
+  1462→              { value: 'MM/DD/YYYY', label: 'MM/DD/YYYY' },
+  1463→              { value: 'DD/MM/YYYY', label: 'DD/MM/YYYY' },
+  1464→              { value: 'YYYY-MM-DD', label: 'YYYY-MM-DD' },
+  1465→            ]}
+  1466→          />
+  1467→        </SettingRow>
+  1468→        <Separator className="bg-white/5" />
+  1469→
+  1470→        <SettingRow label="Time Format">
+  1471→          <GlassSelect
+  1472→            value={settings.timeFormat}
+  1473→            onValueChange={(v) => setSettings((p) => ({ ...p, timeFormat: v }))}
+  1474→            options={[
+  1475→              { value: '12h', label: '12 Hour' },
+  1476→              { value: '24h', label: '24 Hour' },
+  1477→            ]}
+  1478→          />
+  1479→        </SettingRow>
+  1480→        <Separator className="bg-white/5" />
+  1481→
+  1482→        <SettingRow label="Temperature Unit">
+  1483→          <GlassSelect
+  1484→            value={settings.temperatureUnit}
+  1485→            onValueChange={(v) => setSettings((p) => ({ ...p, temperatureUnit: v }))}
+  1486→            options={[
+  1487→              { value: 'fahrenheit', label: 'Fahrenheit' },
+  1488→              { value: 'celsius', label: 'Celsius' },
+  1489→            ]}
+  1490→          />
+  1491→        </SettingRow>
+  1492→      </SettingCard>
+  1493→
+  1494→      <div className="flex justify-end">
+  1495→        <SaveButton onClick={onSave} saving={false} saved={false} />
+  1496→      </div>
+  1497→    </div>
+  1498→  );
+  1499→}
+  1500→
+  1501→/* ================================================================
+  1502→   STATS TAB
+  1503→   ================================================================ */
+  1504→function StatsTab() {
+  1505→  const [history, setHistory] = useState<{ movieTitle: string; progress: number; duration: number; watchedAt: string }[]>([]);
+  1506→  const [loading, setLoading] = useState(true);
+  1507→
+  1508→  useEffect(() => {
+  1509→    fetch('/api/history')
+  1510→      .then((r) => r.json())
+  1511→      .then((data) => {
+  1512→        setHistory(data.history || []);
+  1513→        setLoading(false);
+  1514→      })
+  1515→      .catch(() => setLoading(false));
+  1516→  }, []);
+  1517→
+  1518→  const totalWatched = history.length;
+  1519→  const totalHours = history.reduce((acc, h) => acc + (h.duration / 60 || 0), 0);
+  1520→  const uniqueTitles = new Set(history.map((h) => h.movieTitle)).size;
+  1521→  const completedCount = history.filter((h) => h.progress >= 0.9).length;
+  1522→
+  1523→  return (
+  1524→    <div className="space-y-4">
+  1525→      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+  1526→        {[
+  1527→          { label: 'Titles Watched', value: totalWatched, icon: <Film className="w-5 h-5" /> },
+  1528→          { label: 'Total Hours', value: Math.round(totalHours), icon: <Clock className="w-5 h-5" /> },
+  1529→          { label: 'Unique Titles', value: uniqueTitles, icon: <Star className="w-5 h-5" /> },
+  1530→          { label: 'Completed', value: completedCount, icon: <CheckCircle2 className="w-5 h-5" /> },
+  1531→        ].map((stat) => (
+  1532→          <div key={stat.label} className="glass-panel p-4 flex flex-col items-center text-center gap-2">
+  1533→            <span className="text-[var(--accent-current)]">{stat.icon}</span>
+  1534→            <span className="text-2xl font-bold text-[var(--foreground)]">{stat.value}</span>
+  1535→            <span className="text-xs text-[var(--muted-foreground)]">{stat.label}</span>
+  1536→          </div>
+  1537→        ))}
+  1538→      </div>
+  1539→
+  1540→      <SettingCard>
+  1541→        <SectionHeader title="Recent Watch History" icon={<Clock className="w-4 h-4" />} />
+  1542→        {loading ? (
+  1543→          <div className="flex items-center justify-center py-8">
+  1544→            <Loader2 className="w-6 h-6 animate-spin text-[var(--accent-current)]" />
+  1545→          </div>
+  1546→        ) : history.length === 0 ? (
+  1547→          <p className="text-sm text-[var(--muted-foreground)] py-8 text-center">No watch history yet.</p>
+  1548→        ) : (
+  1549→          <div className="space-y-2 max-h-96 overflow-y-auto">
+  1550→            {history.map((h, i) => (
+  1551→              <div key={i} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
+  1552→                <div className="min-w-0 flex-1">
+  1553→                  <p className="text-sm text-[var(--foreground)] truncate">{h.movieTitle}</p>
+  1554→                  <p className="text-xs text-[var(--muted-foreground)]">
+  1555→                    {new Date(h.watchedAt).toLocaleDateString()} &middot; {Math.round(h.duration)} min
+  1556→                  </p>
+  1557→                </div>
+  1558→                <div className="flex items-center gap-2 shrink-0 ml-3">
+  1559→                  <Progress value={h.progress * 100} className="w-16 h-1.5" />
+  1560→                  <span className="text-xs text-[var(--muted-foreground)]">{Math.round(h.progress * 100)}%</span>
+  1561→                </div>
+  1562→              </div>
+  1563→            ))}
+  1564→          </div>
+  1565→        )}
+  1566→      </SettingCard>
+  1567→    </div>
+  1568→  );
+  1569→}
+  1570→
+  1571→/* ================================================================
+  1572→   ABOUT TAB
+  1573→   ================================================================ */
+  1574→function AboutTab() {
+  1575→  return (
+  1576→    <div className="space-y-4">
+  1577→      <SettingCard>
+  1578→        <SectionHeader title="Application Info" icon={<Info className="w-4 h-4" />} />
+  1579→
+  1580→        <div className="flex items-center justify-center py-8">
+  1581→          <div className="text-center">
+  1582→            <h2 className="text-3xl font-bold text-glow bg-gradient-to-r from-[var(--accent-current)] to-[var(--accent-cyan)] bg-clip-text text-transparent">
+  1583→              GemiFlix
+  1584→            </h2>
+  1585→            <p className="text-sm text-[var(--muted-foreground)] mt-1">Your Premium Media Center</p>
+  1586→          </div>
+  1587→        </div>
+  1588→
+  1589→        <SettingRow label="App Version">
+  1590→          <Badge variant="outline" className="border-[var(--glass-border)] text-[var(--muted-foreground)]">1.0.0</Badge>
+  1591→        </SettingRow>
+  1592→        <Separator className="bg-white/5" />
+  1593→        <SettingRow label="Build Number">
+  1594→          <Badge variant="outline" className="border-[var(--glass-border)] text-[var(--muted-foreground)]">2024.12.1</Badge>
+  1595→        </SettingRow>
+  1596→        <Separator className="bg-white/5" />
+  1597→        <SettingRow label="Framework">
+  1598→          <Badge variant="outline" className="border-[var(--glass-border)] text-[var(--muted-foreground)]">Next.js 16</Badge>
+  1599→        </SettingRow>
+  1600→      </SettingCard>
+  1601→
+  1602→      <SettingCard>
+  1603→        <SectionHeader title="Actions" icon={<Zap className="w-4 h-4" />} />
+  1604→
+  1605→        <SettingRow label="Check for Updates" description="Check if a newer version is available">
+  1606→          <Button variant="outline" size="sm" className="border-[var(--glass-border)] text-[var(--foreground)]"
+  1607→            onClick={() => toast.info('You are running the latest version!')}>
+  1608→            <RefreshCw className="w-3 h-3 mr-1" /> Check
+  1609→          </Button>
+  1610→        </SettingRow>
+  1611→        <Separator className="bg-white/5" />
+  1612→
+  1613→        <SettingRow label="Report a Bug" description="Report issues or suggest features">
+  1614→          <Button variant="outline" size="sm" className="border-[var(--glass-border)] text-[var(--foreground)]"
+  1615→            onClick={() => toast.info('Bug report form coming soon!')}>
+  1616→            <Bug className="w-3 h-3 mr-1" /> Report
+  1617→          </Button>
+  1618→        </SettingRow>
+  1619→      </SettingCard>
+  1620→
+  1621→      <SettingCard>
+  1622→        <SectionHeader title="Legal" icon={<FileText className="w-4 h-4" />} />
+  1623→
+  1624→        <div className="space-y-2">
+  1625→          {[
+  1626→            { label: 'Terms of Service', url: '#' },
+  1627→            { label: 'Privacy Policy', url: '#' },
+  1628→            { label: 'Open Source Licenses', url: '#' },
+  1629→          ].map((link) => (
+  1630→            <a key={link.label} href={link.url} className="flex items-center gap-2 py-2 text-sm text-[var(--accent-current)] hover:underline transition-colors">
+  1631→              <ExternalLink className="w-3 h-3" />
+  1632→              {link.label}
+  1633→            </a>
+  1634→          ))}
+  1635→        </div>
+  1636→      </SettingCard>
+  1637→    </div>
+  1638→  );
+  1639→}
+  1640→
+  1641→/* ================================================================
+  1642→   ADMIN: USERS TAB
+  1643→   ================================================================ */
+  1644→function AdminUsersTab() {
+  1645→  const [users, setUsers] = useState<AdminUserData[]>([]);
+  1646→  const [search, setSearch] = useState('');
+  1647→  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  1648→  const [loading, setLoading] = useState(true);
+  1649→  const mounted = useRef(false);
+  1650→
+  1651→  useEffect(() => {
+  1652→    mounted.current = true;
+  1653→    fetch('/api/admin/users')
+  1654→      .then((r) => r.json())
+  1655→      .then((data) => {
+  1656→        if (mounted.current) {
+  1657→          setUsers(data.users || []);
+  1658→          setLoading(false);
+  1659→        }
+  1660→      })
+  1661→      .catch(() => {
+  1662→        if (mounted.current) setLoading(false);
+  1663→      });
+  1664→    return () => { mounted.current = false; };
+  1665→  }, []);
+  1666→
+  1667→  const refreshUsers = useCallback(() => {
+  1668→    setLoading(true);
+  1669→    fetch('/api/admin/users')
+  1670→      .then((r) => r.json())
+  1671→      .then((data) => {
+  1672→        setUsers(data.users || []);
+  1673→        setLoading(false);
+  1674→      })
+  1675→      .catch(() => setLoading(false));
+  1676→  }, []);
+  1677→
+  1678→  const filtered = users.filter((u) =>
+  1679→    u.name.toLowerCase().includes(search.toLowerCase())
+  1680→  );
+  1681→
+  1682→  const toggleSelect = (id: string) => {
+  1683→    setSelectedIds((prev) => {
+  1684→      const next = new Set(prev);
+  1685→      if (next.has(id)) next.delete(id); else next.add(id);
+  1686→      return next;
+  1687→    });
+  1688→  };
+  1689→
+  1690→  const toggleSelectAll = () => {
+  1691→    if (selectedIds.size === filtered.length) {
+  1692→      setSelectedIds(new Set());
+  1693→    } else {
+  1694→      setSelectedIds(new Set(filtered.map((u) => u.id)));
+  1695→    }
+  1696→  };
+  1697→
+  1698→  const updateUser = async (userId: string, data: Record<string, boolean>) => {
+  1699→    try {
+  1700→      await fetch('/api/admin/users', {
+  1701→        method: 'PUT',
+  1702→        headers: { 'Content-Type': 'application/json' },
+  1703→        body: JSON.stringify({ userId, ...data }),
+  1704→      });
+  1705→      refreshUsers();
+  1706→      toast.success('User updated');
+  1707→    } catch {
+  1708→      toast.error('Failed to update user');
+  1709→    }
+  1710→  };
+  1711→
+  1712→  const deleteUser = async (userId: string, name: string) => {
+  1713→    try {
+  1714→      await fetch('/api/admin/users', {
+  1715→        method: 'DELETE',
+  1716→        headers: { 'Content-Type': 'application/json' },
+  1717→        body: JSON.stringify({ userId }),
+  1718→      });
+  1719→      refreshUsers();
+  1720→      toast.success(`"${name}" deleted`);
+  1721→    } catch {
+  1722→      toast.error('Failed to delete user');
+  1723→    }
+  1724→  };
+  1725→
+  1726→  const bulkAction = async (action: 'activate' | 'suspend' | 'delete' | 'admin') => {
+  1727→    for (const id of selectedIds) {
+  1728→      if (action === 'delete') {
+  1729→        const u = users.find((x) => x.id === id);
+  1730→        await deleteUser(id, u?.name || '');
+  1731→      } else if (action === 'activate') {
+  1732→        await updateUser(id, { isActive: true });
+  1733→      } else if (action === 'suspend') {
+  1734→        await updateUser(id, { isActive: false });
+  1735→      } else if (action === 'admin') {
+  1736→        await updateUser(id, { isAdmin: true });
+  1737→      }
+  1738→    }
+  1739→    setSelectedIds(new Set());
+  1740→  };
+  1741→
+  1742→  return (
+  1743→    <div className="space-y-4">
+  1744→      {/* Stats */}
+  1745→      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+  1746→        {[
+  1747→          { label: 'Total Users', value: users.length, color: 'text-[var(--accent-current)]' },
+  1748→          { label: 'Admins', value: users.filter((u) => u.isAdmin).length, color: 'text-amber-400' },
+  1749→          { label: 'Active', value: users.filter((u) => u.isActive).length, color: 'text-green-400' },
+  1750→          { label: 'Suspended', value: users.filter((u) => !u.isActive).length, color: 'text-red-400' },
+  1751→        ].map((stat) => (
+  1752→          <div key={stat.label} className="glass-panel p-3 text-center">
+  1753→            <span className={`text-xl font-bold ${stat.color}`}>{stat.value}</span>
+  1754→            <p className="text-xs text-[var(--muted-foreground)] mt-1">{stat.label}</p>
+  1755→          </div>
+  1756→        ))}
+  1757→      </div>
+  1758→
+  1759→      <SettingCard>
+  1760→        {/* Search and bulk actions */}
+  1761→        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mb-4">
+  1762→          <div className="flex-1 relative">
+  1763→            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted-foreground)]" />
+  1764→            <Input
+  1765→              value={search}
+  1766→              onChange={(e) => setSearch(e.target.value)}
+  1767→              placeholder="Search users..."
+  1768→              className="glass-input bg-black/80 backdrop-blur-xl border-[var(--glass-border)] text-sm text-[var(--foreground)] pl-9"
+  1769→            />
+  1770→          </div>
+  1771→          {selectedIds.size > 0 && (
+  1772→            <div className="flex gap-1.5 flex-wrap">
+  1773→              <Button size="sm" variant="outline" className="border-green-500/30 text-green-400 text-xs h-7" onClick={() => bulkAction('activate')}>Activate</Button>
+  1774→              <Button size="sm" variant="outline" className="border-yellow-500/30 text-yellow-400 text-xs h-7" onClick={() => bulkAction('suspend')}>Suspend</Button>
+  1775→              <Button size="sm" variant="outline" className="border-amber-500/30 text-amber-400 text-xs h-7" onClick={() => bulkAction('admin')}>Make Admin</Button>
+  1776→              <Button size="sm" variant="outline" className="border-red-500/30 text-red-400 text-xs h-7" onClick={() => bulkAction('delete')}>Delete</Button>
+  1777→            </div>
+  1778→          )}
+  1779→        </div>
+  1780→
+  1781→        {loading ? (
+  1782→          <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-[var(--accent-current)]" /></div>
+  1783→        ) : (
+  1784→          <div className="space-y-2 max-h-[500px] overflow-y-auto">
+  1785→            {/* Select All */}
+  1786→            <div className="flex items-center gap-3 px-2 py-1">
+  1787→              <Checkbox checked={selectedIds.size === filtered.length && filtered.length > 0} onCheckedChange={toggleSelectAll} />
+  1788→              <span className="text-xs text-[var(--muted-foreground)]">Select All ({filtered.length})</span>
+  1789→            </div>
+  1790→
+  1791→            {filtered.map((u) => (
+  1792→              <div key={u.id} className="glass-card flex flex-col sm:flex-row sm:items-center gap-3 p-3 !transform-none hover:!transform-none">
+  1793→                <div className="flex items-center gap-3 flex-1 min-w-0">
+  1794→                  <Checkbox checked={selectedIds.has(u.id)} onCheckedChange={() => toggleSelect(u.id)} />
+  1795→                  <Avatar className="h-8 w-8">
+  1796→                    <AvatarImage src={u.avatar} />
+  1797→                    <AvatarFallback className="bg-[var(--accent-current)]/20 text-[var(--accent-current)] text-xs font-bold">
+  1798→                      {u.name.slice(0, 2).toUpperCase()}
+  1799→                    </AvatarFallback>
+  1800→                  </Avatar>
+  1801→                  <div className="min-w-0 flex-1">
+  1802→                    <p className="text-sm font-medium text-[var(--foreground)] truncate">{u.name}</p>
+  1803→                    <div className="flex items-center gap-1.5 flex-wrap">
+  1804→                      <Badge variant="outline" className={`text-[10px] h-4 px-1.5 ${u.isActive ? 'border-green-500/30 text-green-400' : 'border-red-500/30 text-red-400'}`}>
+  1805→                        {u.isActive ? 'Active' : 'Suspended'}
+  1806→                      </Badge>
+  1807→                      {u.isAdmin && <Badge className="text-[10px] h-4 px-1.5 bg-amber-500/20 text-amber-400">Admin</Badge>}
+  1808→                      {u.isKid && <Badge className="text-[10px] h-4 px-1.5 bg-green-500/20 text-green-400">Kid</Badge>}
+  1809→                    </div>
+  1810→                  </div>
+  1811→                </div>
+  1812→
+  1813→                <div className="flex items-center gap-1.5 shrink-0">
+  1814→                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-amber-400 hover:bg-amber-500/10"
+  1815→                    onClick={() => updateUser(u.id, { isAdmin: !u.isAdmin })}>
+  1816→                    <Shield className="w-3.5 h-3.5" />
+  1817→                  </Button>
+  1818→                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-green-400 hover:bg-green-500/10"
+  1819→                    onClick={() => updateUser(u.id, { isActive: !u.isActive })}>
+  1820→                    {u.isActive ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+  1821→                  </Button>
+  1822→                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-green-400 hover:bg-green-500/10"
+  1823→                    onClick={() => updateUser(u.id, { isKid: !u.isKid })}>
+  1824→                    <BadgeCheck className="w-3.5 h-3.5" />
+  1825→                  </Button>
+  1826→                  <AlertDialog>
+  1827→                    <AlertDialogTrigger asChild>
+  1828→                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-400 hover:bg-red-500/10">
+  1829→                        <Trash2 className="w-3.5 h-3.5" />
+  1830→                      </Button>
+  1831→                    </AlertDialogTrigger>
+  1832→                    <AlertDialogContent className="bg-black/90 backdrop-blur-xl border-[var(--glass-border)]">
+  1833→                      <AlertDialogHeader>
+  1834→                        <AlertDialogTitle className="text-[var(--foreground)]">Delete User &ldquo;{u.name}&rdquo;?</AlertDialogTitle>
+  1835→                        <AlertDialogDescription className="text-[var(--muted-foreground)]">This action cannot be undone.</AlertDialogDescription>
+  1836→                      </AlertDialogHeader>
+  1837→                      <AlertDialogFooter>
+  1838→                        <AlertDialogCancel className="border-[var(--glass-border)] text-[var(--foreground)]">Cancel</AlertDialogCancel>
+  1839→                        <AlertDialogAction onClick={() => deleteUser(u.id, u.name)} className="bg-red-500 hover:bg-red-600">Delete</AlertDialogAction>
+  1840→                      </AlertDialogFooter>
+  1841→                    </AlertDialogContent>
+  1842→                  </AlertDialog>
+  1843→                </div>
+  1844→              </div>
+  1845→            ))}
+  1846→          </div>
+  1847→        )}
+  1848→      </SettingCard>
+  1849→    </div>
+  1850→  );
+  1851→}
+  1852→
+  1853→/* ================================================================
+  1854→   ADMIN: CONTENT TAB
+  1855→   ================================================================ */
+  1856→function AdminContentTab() {
+  1857→  const [contentSettings, setContentSettings] = useState({
+  1858→    autoFetchMetadata: true,
+  1859→    posterQuality: 'high',
+  1860→    backdropQuality: 'high',
+  1861→    trailerAutoPlay: false,
+  1862→    contentRatingDisplay: true,
+  1863→    ageRestrictionLabels: true,
+  1864→    contentWarnings: true,
+  1865→    refreshInterval: '24',
+  1866→    featuredMovie: '',
+  1867→    movieOfDay: '',
+  1868→    importFromTmdb: '',
+  1869→  });
+  1870→
+  1871→  return (
+  1872→    <div className="space-y-4">
+  1873→      <SettingCard>
+  1874→        <SectionHeader title="Content Management" icon={<Film className="w-4 h-4" />} />
+  1875→
+  1876→        <div className="flex flex-wrap gap-2 mb-4">
+  1877→          <Button size="sm" className="bg-[var(--accent-current)] text-white">
+  1878→            <Plus className="w-3 h-3 mr-1" /> Add New Movie
+  1879→          </Button>
+  1880→          <Button size="sm" variant="outline" className="border-[var(--glass-border)] text-[var(--foreground)]">
+  1881→            <Edit3 className="w-3 h-3 mr-1" /> Edit Movie
+  1882→          </Button>
+  1883→          <Button size="sm" variant="outline" className="border-red-500/30 text-red-400">
+  1884→            <Trash2 className="w-3 h-3 mr-1" /> Delete Movie
+  1885→          </Button>
+  1886→        </div>
+  1887→
+  1888→        <SettingRow label="Set Featured Movie" description="Movie shown in the hero section">
+  1889→          <GlassInput value={contentSettings.featuredMovie} onChange={(v) => setContentSettings((p) => ({ ...p, featuredMovie: v }))} placeholder="Movie title" className="w-full sm:w-48" />
+  1890→        </SettingRow>
+  1891→        <Separator className="bg-white/5" />
+  1892→        <SettingRow label="Movie of the Day" description="Today&apos;s featured movie">
+  1893→          <GlassInput value={contentSettings.movieOfDay} onChange={(v) => setContentSettings((p) => ({ ...p, movieOfDay: v }))} placeholder="Movie title" className="w-full sm:w-48" />
+  1894→        </SettingRow>
+  1895→        <Separator className="bg-white/5" />
+  1896→        <SettingRow label="Content Refresh Interval" description="How often to check for new content">
+  1897→          <GlassSelect value={contentSettings.refreshInterval} onValueChange={(v) => setContentSettings((p) => ({ ...p, refreshInterval: v }))} options={[
+  1898→            { value: '1', label: '1 Hour' }, { value: '6', label: '6 Hours' },
+  1899→            { value: '12', label: '12 Hours' }, { value: '24', label: '24 Hours' },
+  1900→          ]} />
+  1901→        </SettingRow>
+  1902→      </SettingCard>
+  1903→
+  1904→      <SettingCard>
+  1905→        <SectionHeader title="Content Settings" icon={<Settings className="w-4 h-4" />} />
+  1906→
+  1907→        <SettingRow label="Auto-Fetch Metadata">
+  1908→          <Switch checked={contentSettings.autoFetchMetadata} onCheckedChange={(v) => setContentSettings((p) => ({ ...p, autoFetchMetadata: v }))} />
+  1909→        </SettingRow>
+  1910→        <Separator className="bg-white/5" />
+  1911→        <SettingRow label="Poster Quality">
+  1912→          <GlassSelect value={contentSettings.posterQuality} onValueChange={(v) => setContentSettings((p) => ({ ...p, posterQuality: v }))} options={[
+  1913→            { value: 'low', label: 'Low' }, { value: 'medium', label: 'Medium' }, { value: 'high', label: 'High' },
+  1914→          ]} />
+  1915→        </SettingRow>
+  1916→        <Separator className="bg-white/5" />
+  1917→        <SettingRow label="Backdrop Quality">
+  1918→          <GlassSelect value={contentSettings.backdropQuality} onValueChange={(v) => setContentSettings((p) => ({ ...p, backdropQuality: v }))} options={[
+  1919→            { value: 'low', label: 'Low' }, { value: 'medium', label: 'Medium' }, { value: 'high', label: 'High' },
+  1920→          ]} />
+  1921→        </SettingRow>
+  1922→        <Separator className="bg-white/5" />
+  1923→        <SettingRow label="Trailer Auto-Play">
+  1924→          <Switch checked={contentSettings.trailerAutoPlay} onCheckedChange={(v) => setContentSettings((p) => ({ ...p, trailerAutoPlay: v }))} />
+  1925→        </SettingRow>
+  1926→        <Separator className="bg-white/5" />
+  1927→        <SettingRow label="Content Rating Display">
+  1928→          <Switch checked={contentSettings.contentRatingDisplay} onCheckedChange={(v) => setContentSettings((p) => ({ ...p, contentRatingDisplay: v }))} />
+  1929→        </SettingRow>
+  1930→        <Separator className="bg-white/5" />
+  1931→        <SettingRow label="Age Restriction Labels">
+  1932→          <Switch checked={contentSettings.ageRestrictionLabels} onCheckedChange={(v) => setContentSettings((p) => ({ ...p, ageRestrictionLabels: v }))} />
+  1933→        </SettingRow>
+  1934→        <Separator className="bg-white/5" />
+  1935→        <SettingRow label="Content Warnings">
+  1936→          <Switch checked={contentSettings.contentWarnings} onCheckedChange={(v) => setContentSettings((p) => ({ ...p, contentWarnings: v }))} />
+  1937→        </SettingRow>
+  1938→      </SettingCard>
+  1939→
+  1940→      <SettingCard>
+  1941→        <SectionHeader title="Import & Collections" icon={<DownloadCloud className="w-4 h-4" />} />
+  1942→
+  1943→        <SettingRow label="Import from TMDB">
+  1944→          <Button size="sm" variant="outline" className="border-[var(--glass-border)] text-[var(--foreground)]">
+  1945→            <DownloadCloud className="w-3 h-3 mr-1" /> Import
+  1946→          </Button>
+  1947→        </SettingRow>
+  1948→        <Separator className="bg-white/5" />
+  1949→        <SettingRow label="Manage Collections / Curated Lists">
+  1950→          <Button size="sm" variant="outline" className="border-[var(--glass-border)] text-[var(--foreground)]">
+  1951→            <ClipboardList className="w-3 h-3 mr-1" /> Manage
+  1952→          </Button>
+  1953→        </SettingRow>
+  1954→      </SettingCard>
+  1955→    </div>
+  1956→  );
+  1957→}
+  1958→
+  1959→/* ================================================================
+  1960→   ADMIN: GENERIC SETTINGS TAB HELPER
+  1961→   ================================================================ */
+  1962→function AdminGenericTab({ title, icon, settings, setSettings, fields, onSave }: {
+  1963→  title: string; icon: React.ReactNode;
+  1964→  settings: Record<string, unknown>;
+  1965→  setSettings: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
+  1966→  fields: { key: string; label: string; description?: string; type: 'toggle' | 'select' | 'input' | 'textarea' | 'slider' | 'readonly'; options?: { value: string; label: string }[]; min?: number; max?: number; readOnlyValue?: string; }[];
+  1967→  onSave: () => void;
+  1968→}) {
+  1969→  const update = (key: string, value: unknown) => {
+  1970→    setSettings((prev) => ({ ...prev, [key]: value }));
+  1971→  };
+  1972→
+  1973→  return (
+  1974→    <div className="space-y-4">
+  1975→      <SettingCard>
+  1976→        <SectionHeader title={title} icon={icon} />
+  1977→        {fields.map((f, i) => (
+  1978→          <React.Fragment key={f.key}>
+  1979→            {i > 0 && <Separator className="bg-white/5" />}
+  1980→            {f.type === 'toggle' ? (
+  1981→              <SettingRow label={f.label} description={f.description}>
+  1982→                <Switch checked={!!settings[f.key]} onCheckedChange={(v) => update(f.key, v)} />
+  1983→              </SettingRow>
+  1984→            ) : f.type === 'select' ? (
+  1985→              <SettingRow label={f.label} description={f.description}>
+  1986→                <GlassSelect
+  1987→                  value={String(settings[f.key] || '')}
+  1988→                  onValueChange={(v) => update(f.key, v)}
+  1989→                  options={f.options || []}
+  1990→                />
+  1991→              </SettingRow>
+  1992→            ) : f.type === 'input' ? (
+  1993→              <SettingRow label={f.label} description={f.description}>
+  1994→                <GlassInput value={String(settings[f.key] || '')} onChange={(v) => update(f.key, v)} className="w-full sm:w-64" />
+  1995→              </SettingRow>
+  1996→            ) : f.type === 'textarea' ? (
+  1997→              <SettingRow label={f.label} description={f.description}>
+  1998→                <GlassTextarea value={String(settings[f.key] || '')} onChange={(v) => update(f.key, v)} rows={3} />
+  1999→              </SettingRow>
+  2000→            ) : f.type === 'slider' ? (
+
+[showing lines 1-2000 of 2635; use offset=2001 with limit to continue reading]

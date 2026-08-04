@@ -1,0 +1,727 @@
+     1→'use client';
+     2→
+     3→import React, { useEffect, useCallback, useRef, useState } from 'react';
+     4→import { motion, AnimatePresence } from 'framer-motion';
+     5→import {
+     6→  Play,
+     7→  Pause,
+     8→  SkipBack,
+     9→  SkipForward,
+    10→  Volume2,
+    11→  Volume1,
+    12→  VolumeX,
+    13→  Subtitles,
+    14→  Maximize,
+    15→  Minimize,
+    16→  X,
+    17→  Loader2,
+    18→} from 'lucide-react';
+    19→import { useAppStore } from '@/lib/stores/app-store';
+    20→import { usePlayerStore } from '@/lib/stores/player-store';
+    21→import { useWatchHistoryStore } from '@/lib/stores/watch-history-store';
+    22→import { pushNotification } from '@/components/gemiflix/NotificationBadge';
+    23→
+    24→type VolumeIcon = 'high' | 'low' | 'muted';
+    25→
+    26→function getVolumeIcon(volume: number, isMuted: boolean): VolumeIcon {
+    27→  if (isMuted || volume === 0) return 'muted';
+    28→  if (volume < 0.5) return 'low';
+    29→  return 'high';
+    30→}
+    31→
+    32→function formatTime(seconds: number): string {
+    33→  const h = Math.floor(seconds / 3600);
+    34→  const m = Math.floor((seconds % 3600) / 60);
+    35→  const s = Math.floor(seconds % 60);
+    36→  if (h > 0) {
+    37→    return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    38→  }
+    39→  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    40→}
+    41→
+    42→function formatRemainingTime(current: number, total: number): string {
+    43→  const remaining = Math.max(0, total - current);
+    44→  const negH = Math.floor(remaining / 3600);
+    45→  const negM = Math.floor((remaining % 3600) / 60);
+    46→  const negS = Math.floor(remaining % 60);
+    47→  const totH = Math.floor(total / 3600);
+    48→  const totM = Math.floor((total % 3600) / 60);
+    49→  const totS = Math.floor(total % 60);
+    50→  const fmtRemain = negH > 0
+    51→    ? `-${negH}:${negM.toString().padStart(2, '0')}:${negS.toString().padStart(2, '0')}`
+    52→    : `-${negM.toString().padStart(2, '0')}:${negS.toString().padStart(2, '0')}`;
+    53→  const fmtTotal = totH > 0
+    54→    ? `${totH}:${totM.toString().padStart(2, '0')}:${totS.toString().padStart(2, '0')}`
+    55→    : `${totM.toString().padStart(2, '0')}:${totS.toString().padStart(2, '0')}`;
+    56→  return `${fmtRemain} / ${fmtTotal}`;
+    57→}
+    58→
+    59→const PROGRESS_STORAGE_KEY = 'gemiflix-player-progress';
+    60→
+    61→function loadSavedProgress(movieId: string): number {
+    62→  if (typeof window === 'undefined') return 0;
+    63→  try {
+    64→    const raw = localStorage.getItem(PROGRESS_STORAGE_KEY);
+    65→    if (!raw) return 0;
+    66→    const map = JSON.parse(raw) as Record<string, number>;
+    67→    return map[movieId] ?? 0;
+    68→  } catch {
+    69→    return 0;
+    70→  }
+    71→}
+    72→
+    73→function saveProgressToStorage(movieId: string, time: number): void {
+    74→  if (typeof window === 'undefined') return;
+    75→  try {
+    76→    const raw = localStorage.getItem(PROGRESS_STORAGE_KEY);
+    77→    const map = raw ? (JSON.parse(raw) as Record<string, number>) : {};
+    78→    map[movieId] = time;
+    79→    localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify(map));
+    80→  } catch {
+    81→    // storage full or unavailable
+    82→  }
+    83→}
+    84→
+    85→const qualityOptions = ['1080p', '720p', '480p'];
+    86→
+    87→export default function VideoPlayer() {
+    88→  const selectedMovie = useAppStore((s) => s.selectedMovie);
+    89→  const setView = useAppStore((s) => s.setView);
+    90→
+    91→  const {
+    92→    isPlaying,
+    93→    currentTime,
+    94→    duration,
+    95→    volume,
+    96→    isMuted,
+    97→    quality,
+    98→    isFullscreen,
+    99→    showSubtitles,
+   100→    showControls,
+   101→    play,
+   102→    pause,
+   103→    seek,
+   104→    setVolume,
+   105→    toggleMute,
+   106→    setQuality,
+   107→    toggleFullscreen,
+   108→    toggleSubtitles,
+   109→    showControlsTemporarily,
+   110→    resetPlayer,
+   111→  } = usePlayerStore();
+   112→
+   113→  const containerRef = useRef<HTMLDivElement>(null);
+   114→  const progressRef = useRef<HTMLDivElement>(null);
+   115→  const [isDragging, setIsDragging] = useState(false);
+   116→  const [isQualityOpen, setIsQualityOpen] = useState(false);
+   117→  const [isVolumeDragging, setIsVolumeDragging] = useState(false);
+   118→  const qualityRef = useRef<HTMLDivElement>(null);
+   119→  const lastTime = useRef(0);
+   120→  const [isLoading, setIsLoading] = useState(true);
+   121→
+   122→  // Loading state: simulate initial content load
+   123→  useEffect(() => {
+   124→    setIsLoading(true);
+   125→    const timer = setTimeout(() => setIsLoading(false), 1200);
+   126→    return () => clearTimeout(timer);
+   127→  }, [selectedMovie?.id]);
+   128→
+   129→  // Restore saved progress when movie changes
+   130→  useEffect(() => {
+   131→    if (!selectedMovie) return;
+   132→    const saved = loadSavedProgress(selectedMovie.id);
+   133→    if (saved > 0 && duration === 0) {
+   134→      lastTime.current = saved;
+   135→    }
+   136→  }, [selectedMovie, duration]);
+   137→
+   138→  // Set duration when movie changes
+   139→  useEffect(() => {
+   140→    if (selectedMovie && duration === 0) {
+   141→      const dur = selectedMovie.duration * 60;
+   142→      usePlayerStore.setState({ duration: dur });
+   143→      // Restore saved progress after duration is set
+   144→      const saved = loadSavedProgress(selectedMovie.id);
+   145→      if (saved > 0) {
+   146→        usePlayerStore.setState({ currentTime: saved });
+   147→        lastTime.current = saved;
+   148→      }
+   149→    }
+   150→  }, [selectedMovie, duration]);
+   151→
+   152→  // Track currentTime and save to localStorage on unmount / play / seek
+   153→  useEffect(() => {
+   154→    if (!selectedMovie) return;
+   155→    if (Math.abs(currentTime - lastTime.current) > 1) {
+   156→      saveProgressToStorage(selectedMovie.id, currentTime);
+   157→      lastTime.current = currentTime;
+   158→    }
+   159→  }, [currentTime, selectedMovie]);
+   160→
+   161→  // Save on unmount
+   162→  useEffect(() => {
+   163→    return () => {
+   164→      if (selectedMovie) {
+   165→        const { currentTime: ct } = usePlayerStore.getState();
+   166→        saveProgressToStorage(selectedMovie.id, ct);
+   167→      }
+   168→    };
+   169→  }, [selectedMovie]);
+   170→
+   171→  // Save on seek
+   172→  useEffect(() => {
+   173→    if (!selectedMovie) return;
+   174→    const unsub = usePlayerStore.subscribe((state, prev) => {
+   175→      if (Math.abs(state.currentTime - prev.currentTime) > 2) {
+   176→        saveProgressToStorage(selectedMovie.id, state.currentTime);
+   177→      }
+   178→    });
+   179→    return unsub;
+   180→  }, [selectedMovie]);
+   181→
+   182→  const handleClose = () => {
+   183→    if (selectedMovie) {
+   184→      const { currentTime: ct } = usePlayerStore.getState();
+   185→      saveProgressToStorage(selectedMovie.id, ct);
+   186→    }
+   187→    resetPlayer();
+   188→    setView('detail');
+   189→  };
+   190→
+   191→  /* Track whether we've already recorded this play session */
+   192→  const hasRecordedRef = useRef(false);
+   193→
+   194→  /* Record watch history + push notification when playback starts */
+   195→  useEffect(() => {
+   196→    if (!isPlaying || !selectedMovie || hasRecordedRef.current) return;
+   197→    hasRecordedRef.current = true;
+   198→    const progress = Math.floor(Math.random() * 80) + 10;
+   199→    useWatchHistoryStore.getState().addToHistory(selectedMovie, progress);
+   200→    pushNotification('played', selectedMovie.title);
+   201→  }, [isPlaying, selectedMovie]);
+   202→
+   203→  /* Reset recorded flag when movie changes */
+   204→  useEffect(() => {
+   205→    hasRecordedRef.current = false;
+   206→  }, [selectedMovie?.id]);
+   207→
+   208→  const togglePlay = () => {
+   209→    if (isPlaying) {
+   210→      pause();
+   211→    } else {
+   212→      play();
+   213→    }
+   214→  };
+   215→
+   216→  // Simulate playback timer
+   217→  useEffect(() => {
+   218→    if (!isPlaying) return;
+   219→
+   220→    const interval = setInterval(() => {
+   221→      const { currentTime: ct, duration: dur } = usePlayerStore.getState();
+   222→      if (ct >= dur) {
+   223→        pause();
+   224→        return;
+   225→      }
+   226→      usePlayerStore.setState({ currentTime: ct + 1 });
+   227→    }, 1000);
+   228→
+   229→    return () => clearInterval(interval);
+   230→  }, [isPlaying, pause]);
+   231→
+   232→  // Keyboard shortcuts
+   233→  const handleKeyDown = useCallback(
+   234→    (e: KeyboardEvent) => {
+   235→      switch (e.key) {
+   236→        case ' ':
+   237→          e.preventDefault();
+   238→          if (isPlaying) {
+   239→            pause();
+   240→          } else {
+   241→            play();
+   242→          }
+   243→          break;
+   244→        case 'ArrowLeft':
+   245→          e.preventDefault();
+   246→          seek(Math.max(0, currentTime - 10));
+   247→          break;
+   248→        case 'ArrowRight':
+   249→          e.preventDefault();
+   250→          seek(Math.min(duration, currentTime + 10));
+   251→          break;
+   252→        case 'm':
+   253→        case 'M':
+   254→          toggleMute();
+   255→          break;
+   256→        case 'f':
+   257→        case 'F':
+   258→          toggleFullscreen();
+   259→          break;
+   260→        case 'Escape':
+   261→          handleClose();
+   262→          break;
+   263→      }
+   264→    },
+   265→    [isPlaying, pause, play, seek, currentTime, duration, toggleMute, toggleFullscreen],
+   266→  );
+   267→
+   268→  useEffect(() => {
+   269→    document.addEventListener('keydown', handleKeyDown);
+   270→    return () => document.removeEventListener('keydown', handleKeyDown);
+   271→  }, [handleKeyDown]);
+   272→
+   273→  // Mouse movement for controls visibility
+   274→  const handleMouseMove = useCallback(() => {
+   275→    showControlsTemporarily();
+   276→  }, [showControlsTemporarily]);
+   277→
+   278→  // Close quality dropdown when clicking outside
+   279→  useEffect(() => {
+   280→    function handleClickOutside(e: MouseEvent) {
+   281→      if (qualityRef.current && !qualityRef.current.contains(e.target as Node)) {
+   282→        setIsQualityOpen(false);
+   283→      }
+   284→    }
+   285→    document.addEventListener('mousedown', handleClickOutside);
+   286→    return () => document.removeEventListener('mousedown', handleClickOutside);
+   287→  }, []);
+   288→
+   289→  // Progress bar click/drag
+   290→  const handleProgressInteraction = useCallback(
+   291→    (e: React.MouseEvent<HTMLDivElement> | MouseEvent) => {
+   292→      if (!progressRef.current || !duration) return;
+   293→      const rect = progressRef.current.getBoundingClientRect();
+   294→      const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+   295→      const ratio = x / rect.width;
+   296→      seek(ratio * duration);
+   297→    },
+   298→    [duration, seek],
+   299→  );
+   300→
+   301→  const handleProgressMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+   302→    setIsDragging(true);
+   303→    handleProgressInteraction(e);
+   304→  };
+   305→
+   306→  useEffect(() => {
+   307→    if (!isDragging) return;
+   308→    const handleMove = (e: MouseEvent) => handleProgressInteraction(e);
+   309→    const handleUp = () => setIsDragging(false);
+   310→    document.addEventListener('mousemove', handleMove);
+   311→    document.addEventListener('mouseup', handleUp);
+   312→    return () => {
+   313→      document.removeEventListener('mousemove', handleMove);
+   314→      document.removeEventListener('mouseup', handleUp);
+   315→    };
+   316→  }, [isDragging, handleProgressInteraction]);
+   317→
+   318→  // Volume bar click/drag
+   319→  const handleVolumeInteraction = useCallback(
+   320→    (e: React.MouseEvent<HTMLDivElement> | MouseEvent) => {
+   321→      const target = e.currentTarget as HTMLDivElement;
+   322→      const rect = target.getBoundingClientRect();
+   323→      const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+   324→      const ratio = x / rect.width;
+   325→      setVolume(ratio);
+   326→    },
+   327→    [setVolume],
+   328→  );
+   329→
+   330→  const handleVolumeMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+   331→    setIsVolumeDragging(true);
+   332→    handleVolumeInteraction(e);
+   333→  };
+   334→
+   335→  useEffect(() => {
+   336→    if (!isVolumeDragging) return;
+   337→    const handleMove = (e: MouseEvent) => {
+   338→      const target = e.target as HTMLElement;
+   339→      const slider = target.closest('[data-volume-slider]') as HTMLDivElement | null;
+   340→      if (slider) {
+   341→        const rect = slider.getBoundingClientRect();
+   342→        const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+   343→        setVolume(x / rect.width);
+   344→      }
+   345→    };
+   346→    const handleUp = () => setIsVolumeDragging(false);
+   347→    document.addEventListener('mousemove', handleMove);
+   348→    document.addEventListener('mouseup', handleUp);
+   349→    return () => {
+   350→      document.removeEventListener('mousemove', handleMove);
+   351→      document.removeEventListener('mouseup', handleUp);
+   352→    };
+   353→  }, [isVolumeDragging, setVolume]);
+   354→
+   355→  if (!selectedMovie) return null;
+   356→
+   357→  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+   358→  const volIcon = getVolumeIcon(volume, isMuted);
+   359→
+   360→  return (
+   361→    <motion.div
+   362→      ref={containerRef}
+   363→      initial={{ opacity: 0 }}
+   364→      animate={{ opacity: 1 }}
+   365→      exit={{ opacity: 0 }}
+   366→      transition={{ duration: 0.3 }}
+   367→      className="fixed inset-0 z-[100] bg-black"
+   368→      onMouseMove={handleMouseMove}
+   369→    >
+   370→      {/* Simulated video backdrop with slow zoom + opacity transition */}
+   371→      <div
+   372→        className="absolute inset-0 transition-opacity duration-1000"
+   373→        style={{
+   374→          opacity: isPlaying ? 0.6 : 0.3,
+   375→        }}
+   376→      >
+   377→        {selectedMovie.backdropImage ? (
+   378→          <img
+   379→            src={selectedMovie.backdropImage}
+   380→            alt=""
+   381→            className="h-full w-full object-cover"
+   382→            style={{
+   383→              animation: 'backdropSlowZoom 30s ease-in-out infinite alternate',
+   384→            }}
+   385→          />
+   386→        ) : (
+   387→          <div
+   388→            className="h-full w-full"
+   389→            style={{
+   390→              background: selectedMovie.backdropGradient,
+   391→              animation: 'backdropSlowZoom 30s ease-in-out infinite alternate',
+   392→            }}
+   393→          />
+   394→        )}
+   395→      </div>
+   396→
+   397→      <div className="absolute inset-0 bg-black/40" />
+   398→
+   399→      {/* Loading state with pulsing accent border */}
+   400→      <AnimatePresence>
+   401→        {isLoading && (
+   402→          <motion.div
+   403→            initial={{ opacity: 0 }}
+   404→            animate={{ opacity: 1 }}
+   405→            exit={{ opacity: 0 }}
+   406→            transition={{ duration: 0.3 }}
+   407→            className="absolute inset-0 z-30 flex items-center justify-center bg-black/60"
+   408→          >
+   409→            <div
+   410→              className="flex flex-col items-center gap-4 rounded-2xl border-2 border-[var(--accent-current)]/30 bg-black/40 px-8 py-10"
+   411→              style={{
+   412→                animation: 'loadingPulseAccent 2s ease-in-out infinite',
+   413→              }}
+   414→            >
+   415→              <Loader2
+   416→                className="h-10 w-10 animate-spin text-[var(--accent-current)]"
+   417→              />
+   418→              <span className="text-sm font-medium text-white/70">
+   419→                Loading content…
+   420→              </span>
+   421→            </div>
+   422→          </motion.div>
+   423→        )}
+   424→      </AnimatePresence>
+   425→
+   426→      {/* Equalizer animation when playing */}
+   427→      {isPlaying && !isLoading && (
+   428→        <div className="absolute inset-0 flex items-center justify-center">
+   429→          <div className="flex items-end gap-1 h-24">
+   430→            {[1, 2, 3, 4, 5, 6, 7, 8].map((bar) => (
+   431→              <motion.div
+   432→                key={bar}
+   433→                className="w-1.5 rounded-full bg-white/20"
+   434→                animate={{
+   435→                  height: [12, 40 + Math.random() * 56, 16, 32 + Math.random() * 48, 12],
+   436→                }}
+   437→                transition={{
+   438→                  duration: 1.2 + Math.random() * 0.8,
+   439→                  repeat: Infinity,
+   440→                  repeatType: 'reverse',
+   441→                  ease: 'easeInOut',
+   442→                  delay: bar * 0.08,
+   443→                }}
+   444→              />
+   445→            ))}
+   446→          </div>
+   447→        </div>
+   448→      )}
+   449→
+   450→      {/* Large centered play/pause button (visible when paused) */}
+   451→      <AnimatePresence>
+   452→        {!isPlaying && !isLoading && (
+   453→          <motion.div
+   454→            initial={{ opacity: 0, scale: 0.8 }}
+   455→            animate={{ opacity: 1, scale: 1 }}
+   456→            exit={{ opacity: 0, scale: 0.8 }}
+   457→            transition={{ duration: 0.2 }}
+   458→            className="absolute inset-0 flex items-center justify-center"
+   459→          >
+   460→            <button
+   461→              onClick={togglePlay}
+   462→              className="flex h-20 w-20 items-center justify-center rounded-full glass-panel transition-transform hover:scale-110 md:h-24 md:w-24"
+   463→              aria-label={isPlaying ? 'Pause' : 'Play'}
+   464→            >
+   465→              <Play className="h-10 w-10 fill-white text-white md:h-12 md:w-12" />
+   466→            </button>
+   467→          </motion.div>
+   468→        )}
+   469→      </AnimatePresence>
+   470→
+   471→      {/* Top bar: Now Playing title + Close button */}
+   472→      <AnimatePresence>
+   473→        {showControls && (
+   474→          <motion.div
+   475→            initial={{ opacity: 0, y: -20 }}
+   476→            animate={{ opacity: 1, y: 0 }}
+   477→            exit={{ opacity: 0, y: -20 }}
+   478→            transition={{ duration: 0.25 }}
+   479→            className="absolute inset-x-0 top-0 z-10 flex items-start justify-between p-4 md:p-6"
+   480→          >
+   481→            <div>
+   482→              <p className="text-xs font-medium uppercase tracking-widest text-white/50">
+   483→                Now Playing
+   484→              </p>
+   485→              <h2 className="mt-1 text-lg font-bold text-white md:text-xl">
+   486→                {selectedMovie.title}
+   487→              </h2>
+   488→            </div>
+   489→
+   490→            <button
+   491→              onClick={handleClose}
+   492→              className="flex h-10 w-10 items-center justify-center rounded-full glass-panel transition-all hover:scale-110 hover:bg-white/10"
+   493→              aria-label="Close player"
+   494→            >
+   495→              <X className="h-5 w-5 text-white" />
+   496→            </button>
+   497→          </motion.div>
+   498→        )}
+   499→      </AnimatePresence>
+   500→
+   501→      {/* Bottom controls overlay with glass backdrop-blur */}
+   502→      <AnimatePresence>
+   503→        {showControls && (
+   504→          <motion.div
+   505→            initial={{ opacity: 0, y: 40 }}
+   506→            animate={{ opacity: 1, y: 0 }}
+   507→            exit={{ opacity: 0, y: 40 }}
+   508→            transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+   509→            className="absolute inset-x-0 bottom-0 z-10"
+   510→          >
+   511→            {/* Gradient overlay for readability */}
+   512→            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent pointer-events-none" />
+   513→
+   514→            <div
+   515→              className="relative px-4 pb-4 pt-12 md:px-6 md:pb-6 md:pt-16"
+   516→              style={{
+   517→                backdropFilter: 'blur(16px)',
+   518→                WebkitBackdropFilter: 'blur(16px)',
+   519→              }}
+   520→            >
+   521→              {/* Progress bar - thicker h-2.5 with glowing dot indicator */}
+   522→              <div
+   523→                ref={progressRef}
+   524→                className="group relative mb-3 h-2.5 cursor-pointer rounded-full bg-white/20 transition-all hover:h-3"
+   525→                onClick={handleProgressInteraction}
+   526→                onMouseDown={handleProgressMouseDown}
+   527→                role="slider"
+   528→                aria-label="Video progress"
+   529→                aria-valuemin={0}
+   530→                aria-valuemax={100}
+   531→                aria-valuenow={Math.round(progress)}
+   532→                tabIndex={0}
+   533→              >
+   534→                {/* Buffered indicator (visual only) */}
+   535→                <div
+   536→                  className="absolute inset-y-0 left-0 rounded-full bg-white/15"
+   537→                  style={{ width: `${Math.min(progress + 15, 100)}%` }}
+   538→                />
+   539→                {/* Progress fill */}
+   540→                <motion.div
+   541→                  className="absolute inset-y-0 left-0 rounded-full"
+   542→                  style={{
+   543→                    background: 'var(--accent-current)',
+   544→                    width: `${progress}%`,
+   545→                    boxShadow: '0 0 8px color-mix(in srgb, var(--accent-current) 60%, transparent)',
+   546→                  }}
+   547→                  layout={false}
+   548→                />
+   549→                {/* Glowing dot indicator */}
+   550→                <div
+   551→                  className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-lg opacity-0 transition-opacity group-hover:opacity-100"
+   552→                  style={{
+   553→                    left: `${progress}%`,
+   554→                    boxShadow:
+   555→                      '0 0 8px var(--accent-current), 0 0 16px color-mix(in srgb, var(--accent-current) 50%, transparent), 0 0 24px color-mix(in srgb, var(--accent-current) 30%, transparent)',
+   556→                  }}
+   557→                />
+   558→              </div>
+   559→
+   560→              {/* Controls row */}
+   561→              <div className="flex items-center justify-between gap-4">
+   562→                {/* Left controls */}
+   563→                <div className="flex items-center gap-2 md:gap-3">
+   564→                  {/* Play/Pause */}
+   565→                  <button
+   566→                    onClick={togglePlay}
+   567→                    className="flex h-9 w-9 items-center justify-center rounded-full glass-panel transition-all hover:scale-110 hover:bg-white/10"
+   568→                    aria-label={isPlaying ? 'Pause' : 'Play'}
+   569→                  >
+   570→                    {isPlaying ? (
+   571→                      <Pause className="h-4 w-4 text-white" />
+   572→                    ) : (
+   573→                      <Play className="h-4 w-4 fill-white text-white" />
+   574→                    )}
+   575→                  </button>
+   576→
+   577→                  {/* Skip Back 10s */}
+   578→                  <button
+   579→                    onClick={() => seek(Math.max(0, currentTime - 10))}
+   580→                    className="flex h-9 w-9 items-center justify-center rounded-full glass-panel transition-all hover:scale-110 hover:bg-white/10"
+   581→                    aria-label="Rewind 10 seconds"
+   582→                  >
+   583→                    <SkipBack className="h-4 w-4 text-white" />
+   584→                  </button>
+   585→
+   586→                  {/* Skip Forward 10s */}
+   587→                  <button
+   588→                    onClick={() => seek(Math.min(duration, currentTime + 10))}
+   589→                    className="flex h-9 w-9 items-center justify-center rounded-full glass-panel transition-all hover:scale-110 hover:bg-white/10"
+   590→                    aria-label="Forward 10 seconds"
+   591→                  >
+   592→                    <SkipForward className="h-4 w-4 text-white" />
+   593→                  </button>
+   594→
+   595→                  {/* Volume control */}
+   596→                  <div className="hidden items-center gap-2 sm:flex">
+   597→                    <button
+   598→                      onClick={toggleMute}
+   599→                      className="flex h-9 w-9 items-center justify-center rounded-full glass-panel transition-all hover:scale-110 hover:bg-white/10"
+   600→                      aria-label={isMuted ? 'Unmute' : 'Mute'}
+   601→                    >
+   602→                      {volIcon === 'high' && <Volume2 className="h-4 w-4 text-white" />}
+   603→                      {volIcon === 'low' && <Volume1 className="h-4 w-4 text-white" />}
+   604→                      {volIcon === 'muted' && <VolumeX className="h-4 w-4 text-white" />}
+   605→                    </button>
+   606→                    <div
+   607→                      data-volume-slider
+   608→                      className="group relative h-1 w-20 cursor-pointer rounded-full bg-white/20 transition-all hover:h-1.5"
+   609→                      onMouseDown={handleVolumeMouseDown}
+   610→                    >
+   611→                      <div
+   612→                        className="absolute inset-y-0 left-0 rounded-full"
+   613→                        style={{
+   614→                          background: 'var(--accent-current)',
+   615→                          width: `${isMuted ? 0 : volume * 100}%`,
+   616→                        }}
+   617→                      />
+   618→                    </div>
+   619→                  </div>
+   620→                </div>
+   621→
+   622→                {/* Right controls */}
+   623→                <div className="flex items-center gap-2 md:gap-3">
+   624→                  {/* Time display — remaining time format */}
+   625→                  <span className="hidden text-xs font-medium text-white/70 sm:block">
+   626→                    {formatRemainingTime(currentTime, duration)}
+   627→                  </span>
+   628→
+   629→                  {/* Subtitle toggle */}
+   630→                  <button
+   631→                    onClick={toggleSubtitles}
+   632→                    className={`flex h-9 w-9 items-center justify-center rounded-full glass-panel transition-all hover:scale-110 hover:bg-white/10 ${
+   633→                      showSubtitles ? 'bg-[var(--accent-current)]/30' : ''
+   634→                    }`}
+   635→                    aria-label={showSubtitles ? 'Disable subtitles' : 'Enable subtitles'}
+   636→                  >
+   637→                    <Subtitles className="h-4 w-4 text-white" />
+   638→                  </button>
+   639→
+   640→                  {/* Quality selector */}
+   641→                  <div className="relative" ref={qualityRef}>
+   642→                    <button
+   643→                      onClick={() => setIsQualityOpen(!isQualityOpen)}
+   644→                      className="flex h-9 items-center justify-center rounded-full px-3 glass-panel transition-all hover:scale-105 hover:bg-white/10"
+   645→                      aria-label="Select quality"
+   646→                    >
+   647→                      <span className="text-xs font-semibold text-white">
+   648→                        {quality}
+   649→                      </span>
+   650→                    </button>
+   651→
+   652→                    <AnimatePresence>
+   653→                      {isQualityOpen && (
+   654→                        <motion.div
+   655→                          initial={{ opacity: 0, y: 8, scale: 0.95 }}
+   656→                          animate={{ opacity: 1, y: 0, scale: 1 }}
+   657→                          exit={{ opacity: 0, y: 8, scale: 0.95 }}
+   658→                          transition={{ duration: 0.15 }}
+   659→                          className="absolute bottom-full right-0 mb-2 overflow-hidden rounded-xl glass-panel py-1"
+   660→                        >
+   661→                          {qualityOptions.map((q) => (
+   662→                            <button
+   663→                              key={q}
+   664→                              onClick={() => {
+   665→                                setQuality(q);
+   666→                                setIsQualityOpen(false);
+   667→                              }}
+   668→                              className={`flex w-full items-center px-4 py-2 text-xs font-medium transition-colors hover:bg-white/10 ${
+   669→                                quality === q
+   670→                                  ? 'text-[var(--accent-current)]'
+   671→                                  : 'text-white/70'
+   672→                              }`}
+   673→                            >
+   674→                              {q}
+   675→                            </button>
+   676→                          ))}
+   677→                        </motion.div>
+   678→                      )}
+   679→                    </AnimatePresence>
+   680→                  </div>
+   681→
+   682→                  {/* Fullscreen toggle */}
+   683→                  <button
+   684→                    onClick={toggleFullscreen}
+   685→                    className="flex h-9 w-9 items-center justify-center rounded-full glass-panel transition-all hover:scale-110 hover:bg-white/10"
+   686→                    aria-label={
+   687→                      isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'
+   688→                    }
+   689→                  >
+   690→                    {isFullscreen ? (
+   691→                      <Minimize className="h-4 w-4 text-white" />
+   692→                    ) : (
+   693→                      <Maximize className="h-4 w-4 text-white" />
+   694→                    )}
+   695→                  </button>
+   696→                </div>
+   697→              </div>
+   698→            </div>
+   699→          </motion.div>
+   700→        )}
+   701→      </AnimatePresence>
+   702→
+   703→      {/* Inline keyframes for backdrop zoom and loading pulse */}
+   704→      <style jsx>{`
+   705→        @keyframes backdropSlowZoom {
+   706→          0% {
+   707→            transform: scale(1);
+   708→          }
+   709→          100% {
+   710→            transform: scale(1.12);
+   711→          }
+   712→        }
+   713→        @keyframes loadingPulseAccent {
+   714→          0%, 100% {
+   715→            border-color: color-mix(in srgb, var(--accent-current) 30%, transparent);
+   716→            box-shadow: 0 0 12px color-mix(in srgb, var(--accent-current) 15%, transparent);
+   717→          }
+   718→          50% {
+   719→            border-color: color-mix(in srgb, var(--accent-current) 60%, transparent);
+   720→            box-shadow: 0 0 28px color-mix(in srgb, var(--accent-current) 30%, transparent);
+   721→          }
+   722→        }
+   723→      `}</style>
+   724→    </motion.div>
+   725→  );
+   726→}
+   727→
