@@ -1,0 +1,3 @@
+{
+  "/api/moviebox/stream/[id]/route": "app/api/moviebox/stream/[id]/route.js"
+}
